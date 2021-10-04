@@ -5,6 +5,10 @@
  *
  * Improved in 06.2020 by https://github.com/utilmind
  * ...more improvements and first release as separate umSuggestags on 10.2021
+ *
+ * Compatibility notes:
+ *    - trim() is part of JavaScript v1.8.1: https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
+ *      But you can use $.trim(...) instead.
  */
 "use strict"; // can be commented out in production release
 
@@ -46,7 +50,7 @@
                         showAllSuggestions: false,
                         keepLastOnHoverTag: true,
                         checkSimilar      : true,
-                        delimiters        : [],
+                        delimiters        : [",", ";"], // first delimiter used to split the incoming value. At least 1 delimiter must be used.
                 };
                 _self.classes       = {
                         sTagsArea     : ".umsg-suggestags-area",
@@ -125,7 +129,7 @@
                         // convert current <input> value into tags.
                         if (items.length) {
                             $.each(items, function(index, item) {
-                                _self.addTag($.trim(item));
+                                _self.addTag(item.trim());
                             });
                         }
                 },
@@ -215,12 +219,13 @@
                             $suggestList = $(selectors.listArea),
                             $input = $(selectors.sTagsInput),
 
-                            appendTag = function(_instance, $input, isDelimiter) {
-                                var value = $.trim($input.text().replace(/,/g , "")); // AK: originally was used .val() for input field instead of .text().
-                                if (isDelimiter) {
-                                        $.each(_instance.settings.delimiters, function(dkey, delimiter) {
-                                                value = $.trim(value.replace(delimiter, ""));
-                                        });
+                            appendTag = function(_instance, $input, hasDelimiter) {
+                                var value = $input.text().trim();
+                                if (hasDelimiter) {
+                                    // remove all characters used as delimiters from the appended value
+                                    $.each(_instance.settings.delimiters, function(dkey, delimiter) {
+                                        value = value.replace(delimiter, "").trim();
+                                    });
                                 }
 
                                 $input.text(""); // AK: originally was used .val() for input field instead of .text().
@@ -258,7 +263,7 @@
                                 // when limit reached we shouldn't allow to type anything, although control is focusable.
                                 if (_self.isLimitReached() &&
                                     ((48 < key) && // 48 is "0". All other keys before 0 is control keys (like backspace, enter, tab, escape etc), so the are OK.
-                                     !((key >= 112) && (key <= 123)))) { // F1..F12
+                                     !((112 <= key) && (123 >= key)))) { // ! F1..F12
                                       e.preventDefault();
                                 }
                         })
@@ -269,12 +274,12 @@
                                     key = e.key;
 
                                 if (key) {
-                                  // AK 14.06.2020: I don't trust to e.key anymore. Sometimes (and totally randomly) it don't recognize non-latin keyboard layout and shows ".", when user typed ",".
-                                  // UPD. It trigging keyup twice on cyrrillic layout. 1st key is Shift, 2nd is ".". But shift+"." is "," on cyrillic layout!
-                                  // UPD. It's so easy to reproduce. Press shift, immediately unhold it and type ".". Again, Shift, then "." lightning quickly, without holding Shift.
-                                  // So let's check last character to know it for sure.
-                                  if (("Shift" === key) && ("," === inputText.substr(-1)))
-                                    key = ",";
+                                    // AK 14.06.2020: I don't trust to e.key anymore. Sometimes (and totally randomly) it don't recognize non-latin keyboard layout and shows ".", when user typed ",".
+                                    // UPD. It trigging keyup twice on cyrrillic layout. 1st key is Shift, 2nd is ".". But shift+"." is "," on cyrillic layout!
+                                    // UPD. It's so easy to reproduce. Press shift, immediately unhold it and type ".". Again, Shift, then "." lightning quickly, without holding Shift.
+                                    // So let's check last character to know it for sure.
+                                    if (("Shift" === key) && ("," === inputText.substr(-1)))
+                                        key = ",";
 
                                 }else if (13 === e.keyCode)
                                     key = "Enter";
@@ -289,10 +294,10 @@
                                         return;
                                 }
 
-                                var isDelimiter = (settings.delimiters && (-1 !== $.inArray(key, settings.delimiters))),
+                                var isDelimiter = -1 !== $.inArray(key, settings.delimiters),
                                     isEnter = key === "Enter";
 
-                                if (("," === key) || (";" === key) || isEnter || isDelimiter) {
+                                if (isDelimiter || isEnter) {
                                         if (isEnter && ("" === inputText)) {
                                                 $input.closest("form").submit(); // act like a normal <input> box. Submit on enter.
 
@@ -530,10 +535,10 @@
                                 if (_self.isSuggestAction() && !_self.ajaxActive) {
                                         var minChars   = _self.settings.suggestionsAction.minChars,
                                             minChange  = _self.settings.suggestionsAction.minChange,
-                                            lastSearch = _self.selectors.sTagsInput.attr("last-search");
+                                            lastSearch = _self.selectors.sTagsInput.data("last-search");
 
                                         if ((value.length >= minChars) && (-1 === minChange || !lastSearch || _self.similarity(lastSearch, value) * 100 <= minChange)) {
-                                                _self.selectors.sTagsInput.attr("last-search", value);
+                                                _self.selectors.sTagsInput.data("last-search", value);
                                                 _self.ajaxActive = true;
                                                 _self.processAjaxSuggestion(value, keycode);
                                         }
@@ -895,7 +900,7 @@
                         value = value.toLowerCase();
 
                         $(this.selectors.sTagsArea).find(this.classes.tagItem).each(function() {
-                                var tagName = $.trim($(this).attr("data-val"));
+                                var tagName = $(this).attr("data-val").trim();
                                 if (value === tagName.toLowerCase()) {
                                         $item = $(this);
                                         return false; // break each()

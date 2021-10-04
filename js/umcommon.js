@@ -52,7 +52,7 @@ var commonSvgIcons = {
 
 
     // STRING UTILITIES
-    if (!String.prototype.trim) { // Trim() is part of JavaScript v1.8.1: https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
+    if (!String.prototype.trim) { // trim() is part of JavaScript v1.8.1: https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
         String.prototype.trim = function() {
             return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ""); // AK 29.04.2019: tested, both Unicode and non-Unicode safe.
         };
