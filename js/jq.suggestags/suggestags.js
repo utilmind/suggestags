@@ -1024,7 +1024,7 @@
                 },
         };
 
-        $.fn.amsifySuggestags = function(settings, method) {
+        $.fn.umSuggestags = function(settings, method) {
                 return this.each(function() {
                          if (settings && ("object" !== typeof settings)) {
                              method = settings;

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jquery Suggestags :: languages</title>
+
+<link rel="stylesheet" type="text/css" href="./js/jq.suggestags/suggestags.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+<script type="text/javascript" src="./js/jq.suggestags/suggestags.js"></script>
+</head>
+<body>
+<header>
+	<div class="container">
+		<h1 class="text-center">Bootstrap &amp; Jquery Suggestags</h1>
+	</div>
+</header>
+
+<style>
+#spoken_language div :focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+
+<div class="container" style="min-height:360px;">
+	<div class="col-md-3"></div>
+	<div class="col-md-6 text-center">
+		<div class="form-group">
+			<input type="text" class="form-control" name="country"/>
+		</div>
+		<br><br>
+		<h4>Already Selected</h4>
+		<div class="form-group">
+			<input type="text" class="form-control" name="color" value="Orange,Black"/>
+		</div>
+		<h4>White Listed</h4>
+		<div class="form-group">
+			<input type="text" class="form-control" name="planets" value="Earth,Mars"/>
+		</div>
+		<h4>Tag Limit</h4>
+		<div class="form-group">
+			<input type="text" class="form-control" name="anything" value="one,two,three,four,five,six"/>
+		</div>
+		<h4><label for="spoken_language">And another demo with suggested languages. (Width 320px, “light” background. And btw, this is clickable label to switch focus on input.)</label></h4>
+		<div class="form-group">
+                        <div style="width: 320px;">
+			<input type="text" class="form-control font-weight-bold amsify-light" name="spoken_language" id="spoken_language" placeholder="Fluently spoken languages, comma separated" />
+                        </div>
+		</div>
+
+        	<input type="text" class="form-control" placeholder="This is regular bootstrap's form-control, not suggestags" />
+	</div>
+	<div class="col-md-3"></div>
+</div>
+<footer>
+	<div class="container">
+		<h1 class="text-left">Usage</h1>
+		<pre>
+			<code>
+	$('input[name="country"]').umSuggestags({
+		prepareTag: function(value) {
+			return value.charAt(0).toUpperCase() + value.slice(1); // ucfirst()
+		}
+	});
+	$('input[name="color"]').umSuggestags({
+		suggestions: ['Black', 'White', 'Red', 'Blue', 'Green', 'Orange']
+	});
+	$('input[name="planets"]').umSuggestags({
+		suggestions: ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupitor', 'Uranus', 'Neptune', 'Pluto'],
+		whiteList: true
+	});
+	$('input[name="anything"]').umSuggestags({
+		tagLimit: 5
+	});
+
+        $('input[name="spoken_language"]').umSuggestags({
+               selectSimilar: false,
+               // this is totally random order. I just put world most popular languages.
+               suggestions: ["English", "Spanish", "Portuguese", "German", "French", "French Creole", "Dutch", "Italian", "Greek", "Albanian", "Hebrew",
+                             "Russian", "Ukrainian", "Belarusian", "Polish", "Czech", "Slovak", "Slovene", "Serbo-Croatian", "Bulgarian", "Macedonian", "Hungarian", "Romanian",
+                             "Irish", "Scots", "Welsh", "Catalan", "Flemish",
+                             "Finnish", "Swedish", "Norwegian", "Danish", "Icelandic", "Basque",
+                             "Latvian", "Lithuanian", "Estonian",
+                             "Georgian", "Armenian", "Azerbaijani", "Kazakh",
+                             "Arabic", "Persian", "Chinese (Standard)", "Japanese", "Korean", "Vietnamese", "Thai", "Khmer", "Lao", "Mongolian", "Cebuano",
+                             "Hindi", "Urdu", "Punjabi", "Bengali", "Marathi", "Telugu", "Tamil", "Gujarati", "Kannada", "Odia", "Malayalam", "Sanskrit",
+                             "Indonesian", "Malay", "Javanese", "Burmese", "Tagalog", "Turkish", "Tatar", "Uzbek", "Tajik", "Kurdish",
+                             "Afrikaans", "Swahili", "Yoruba", "Somali", "Xhosa", "Oromo", "Amharic", "Mossi", "Kongo", "Lingala", "Igbo", "Hausa", "Fulani", "Berber",
+                             "Navajo", "Yupik", "Sioux", "Apache", "Cherokee", "Choctaw", ],
+               prepareTag: function(value) {
+                   return value.ucwords();
+                   // return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(); // unexisting ucfirst(). See also ucwords();
+               },
+        });
+			</code>
+		</pre>
+	</div>
+</footer>
+<!-- -->
+<script type="text/javascript">
+	$('input[name="country"]').umSuggestags({
+		prepareTag: function(value) {
+			return value.charAt(0).toUpperCase() + value.slice(1); // ucfirst()
+		}
+	});
+	$('input[name="color"]').umSuggestags({
+		suggestions: ['Black', 'White', 'Red', 'Blue', 'Green', 'Orange']
+	});
+	$('input[name="planets"]').umSuggestags({
+		suggestions: ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupitor', 'Uranus', 'Neptune', 'Pluto'],
+		whiteList: true
+	});
+	$('input[name="anything"]').umSuggestags({
+		tagLimit: 5
+	});
+
+        $('input[name="spoken_language"]').umSuggestags({
+               selectSimilar: false,
+               // this is totally random order. I just put world most popular languages.
+               suggestions: ["English", "Spanish", "Portuguese", "German", "French", "French Creole", "Dutch", "Italian", "Greek", "Albanian", "Hebrew",
+                             "Russian", "Ukrainian", "Belarusian", "Polish", "Czech", "Slovak", "Slovene", "Serbo-Croatian", "Bulgarian", "Macedonian", "Hungarian", "Romanian",
+                             "Irish", "Scots", "Welsh", "Catalan", "Flemish",
+                             "Finnish", "Swedish", "Norwegian", "Danish", "Icelandic", "Basque",
+                             "Latvian", "Lithuanian", "Estonian",
+                             "Georgian", "Armenian", "Azerbaijani", "Kazakh",
+                             "Arabic", "Persian", "Chinese (Standard)", "Japanese", "Korean", "Vietnamese", "Thai", "Khmer", "Lao", "Mongolian", "Cebuano",
+                             "Hindi", "Urdu", "Punjabi", "Bengali", "Marathi", "Telugu", "Tamil", "Gujarati", "Kannada", "Odia", "Malayalam", "Sanskrit",
+                             "Indonesian", "Malay", "Javanese", "Burmese", "Tagalog", "Turkish", "Tatar", "Uzbek", "Tajik", "Kurdish",
+                             "Afrikaans", "Swahili", "Yoruba", "Somali", "Xhosa", "Oromo", "Amharic", "Mossi", "Kongo", "Lingala", "Igbo", "Hausa", "Fulani", "Berber",
+                             "Navajo", "Yupik", "Sioux", "Apache", "Cherokee", "Choctaw", ],
+               prepareTag: function(value) {
+                   // return value.ucwords();
+                   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+               },
+        });
+
+</script>
+
+</body>
+</html>
