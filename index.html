@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+<title>Tags editor demo</title>
+
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=11" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, shrink-to-fit=no" />
+<meta name="author" content="utilmind, 2021" />
+
+<link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css" />
+<link rel="stylesheet" type="text/css" href="./css/common.min.css" />
+<link rel="stylesheet" type="text/css" href="./js/jq.suggestags/suggestags.css" />
+<link rel="preload" as="style" type="text/css" href="./js/alertify/css/um.min.css" />
+
+<script defer src="./js/jqbm.js"></script>
+<script defer src="./js/lang/common_en.js"></script>
+<script defer src="./js/umcommon.min.js"></script>
+
+<script defer src="./js/lang/languages_en.js"></script>
+<script defer src="./js/jq.suggestags/suggestags.js"></script>
+</head>
+
+<body>
+    <div id="content" class="container mt-5">
+
+        <h4><b>Goal:</b> prepare perfect input field for the tags/keywords.</h4>
+<form>
+        <div class="mt-4 mb-5">
+            <div><label for="input-keywords">Enter keywords, comma or semicolon-separated</label></div>
+            <div><input type="text" name="keywords" id="input-keywords" class="form-control place-bi"
+                placeholder="keywords, comma-separated" spellcheck="true" required autofocus /></div>
+            <div class="mt-2"><input type="text" name="temp" id="input-temp" class="form-control place-bi"
+                placeholder="keywords, comma-separated" spellcheck="true" required autofocus /></div>
+        </div>
+</form>
+
+        <h2>Sources on GitHub:</h2>
+        <ul>
+            <li><a href="https://github.com/utilmind/tags-edit/" target="_blank">tags-edit</a></li>
+        </ul>
+        <p>See also</p>
+        <ul>
+            <li><a href="https://github.com/utilmind/phone-number-edit/" target="_blank">phone-number-edit</a></li>
+            <li><a href="https://github.com/utilmind/email-autocomplete/" target="_blank">email-autocomplete</a></li>
+        </ul>
+
+        <hr />
+
+        <div class="text-right">&copy; utilmind, 2021</div>
+
+    </div>
+
+<script>
+// <![CDATA[
+var wReady=function(e,n){var t=document.readyState;n||"loading"!==t?"complete"!==t?window.addEventListener("load",function(){e(3)}):"number"===typeof document.uLateLoad?document.addEventListener("uLateLoad",function n(){document.removeEventListener("uLateLoad",n),e(3)}):e(3):document.addEventListener("DOMContentLoaded",function(){e(2)&&wReady(e)})},doInit=function(f,w){(w>1||(w&&"loading"===document.readyState)||f(1))&&wReady(f,w>1)}
+
+doInit(function() {
+    if (!window.$) return 1;
+
+    var $input = $("#input-keywords");
+
+    // suggestags-based auto-completion
+    $input.amsifySuggestags({
+        tagLimit: 3,
+        // this is totally random order. I just put world most popular languages.
+        suggestions: langLanguages,
+        prepareTag: function(value) {
+            return value.ucwords();
+        },
+    });
+
+}, 1);
+// ]]>
+</script>
+
+</body>
+</html>

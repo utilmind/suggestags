@@ -1,0 +1,804 @@
+/* AK 24.07.2019. Some styles will be outdated in time, but required for legacy sites.
+   Create "commonN.css" for new versions, where N is version number. Or ever better, 2-digits of year number.
+
+   AK 23.07.2020: It's good to have html { height: 100%; }, but it's incompatible with some WordPress themes, like Flatsome.
+   So if you need html { height: 100% } -- set it in site-specific CSS.
+ */
+body {
+  position: relative; /* we need scroll bar over all window elements */
+  overflow-x: hidden; /* don't set overflow-x to other controls (especially <html>), or you will have problems with tooltip positioning. (It should be "auto" for other controls.) */
+  background-color: #F8F9FA; /* Это ".bg-light" Бутстрапа. Изначально предполагалось сделать сероватый цвет только для "main", но ведь у нас ещё есть и footer... */
+}
+label {
+  cursor: default; /* make sense only for IE, which shows "cursor: text" by default. Other browsers works well as is. */
+}
+body.busy * {
+  cursor: wait;
+}
+abbr, acronym, .cursor-help { /* <acronym> deprecated in HTML5. Use <abbr> for future developments. */
+  cursor: help;
+}
+abbr.abbr { /* the fixx for annoying text-decoration in Bootstrap. And still don't use deprectated "acronym". */
+  text-decoration: none !important;
+  border-bottom: 1px dotted gray !important;
+}
+
+header, footer { /* AK: I have no idea how it works, but it surely works in Bootstrap v4.3.1. It allows to avoid horizontal scrollbar
+                        in header and footer without specifying "overflow: hidden", which conflicts with Bootstrap tooltips. */
+  display: table !important;
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* hide recaptcha v3 badge */
+.grecaptcha-badge {
+  visibility: hidden; /* allocate space for it, but do not display. */
+  bottom: 42px;
+  z-index: 9999; /* if we want to display it -- it should be above all sticky panels */
+}
+
+
+/* VIEWPORTS */
+/* Alternative and not bad idea without Flexbox: https://chrisbracco.com/css-sticky-footer-effect/
+   But in this case we should always add bottom padding equal to the footer height. Code was following:
+
+       body.sticky-footer {
+           min-height: 100%; // not 100%, but minimum 100% if we want fixed but not sticky footer
+
+           // !OVERRIDE THE NEXT VALUE IN YOUR PROJECT TO SETUP CORRECT HEIGHT FOR THE STICKY FOOTER!
+           padding-bottom: 41px; // DEFAULT height of sticky (but not fixed) footer. OVERRIDE IT FOR YOUR PROJECT!
+       }
+       body.sticky-footer > footer {
+           position: absolute;
+           right: 0;
+           bottom: 0;
+           left: 0;
+       }
+
+   CONS: possible problem with Bootstrap modal dialogs, the scrollbar is non scrollable if the content height less than dialog height.
+         Problem require further investigation, but current (temporary) solution is adding the following:
+            body.modal-open { // or better "body.modal-open > main"
+              min-height: [EXPECTED DIALOG HEIGHT]px;
+            }
+         It's project specific.
+
+   BTW: scrollable body of modal dialog:
+        .modal-body {
+                position: relative;
+                padding: 20px;
+                height: 400px;
+                overflow-y: scroll;
+        }
+
+   AK 12.04.2020: it was "body.sticky-footer" before, but we got a project with swiping side-panel, so let's footer should stick to the bottom of the only main page, not the whole <body>.
+                  BUT! Watch out! <body> must have 100% height in order to behave correctly!
+
+ */
+.v-flex,
+.sticky-footer {
+        display: -ms-flexbox !important;
+        display: flex !important;
+        -ms-flex-direction: column !important;
+        flex-direction: column !important;
+        min-height: 100%; /* not 100%, but minimum 100% if we want fixed but not sticky footer */
+        width: 100%;
+}
+.sticky-footer > footer {
+        margin-top: auto !important;
+}
+.v-flex-container { /* it's not related to viewport of <body>. It's scrollable container, like sidebar of pasfotos. */
+        flex-grow: 1;
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow-y: auto; /* WARNING! This will block all dropdowns inside the container. Everything will be locked inside */
+}
+
+
+
+/* flash color (to draw user attention to some added/changed element). Playground: https://jsfiddle.net/utilmind/fc8j01yu/ */
+@-webkit-keyframes flash-item {
+    30% { background-color: #FFC107; }
+}
+@keyframes flash-item {
+    30% { background-color: #FFC107; }
+}
+.flash-item {
+    -webkit-animation: flash-item 1s 1 linear;
+    animation: flash-item 1s 1 linear;
+}
+
+/* previously there was also "@media print" media group, but it's removed, since animation works only for "interactive" media groups anyway. */
+@media (prefers-reduced-motion: reduce) {
+        .flash-item {
+            -webkit-animation: flash-item .2s 1 linear;
+            animation: flash-item .2s 1 linear;
+        }
+}
+
+
+/* button in style of Bootstrap3 */
+/* // not used
+.btn-glyph { // unstyled button with FontAwesome glyph
+  padding: .375rem .75rem; // copied from .btn
+  min-width: 2.6rem;
+}*/
+.btn.btn-def3 {
+    color: #000;
+    background-color: #FFF;
+    border-color: #ccc;
+}
+.btn.btn-def3:hover, .btn.btn-def3:focus, .btn.btn-def3:active, .btn.btn-def3.active, .open > .dropdown-toggle.btn-def3 {
+    background: #e6e6e6;
+    border-color: #adadad;
+
+    -webkit-transition: box-shadow 0.05s ease-in-out;
+    -moz-transition: box-shadow 0.05s ease-in-out;
+    -o-transition: box-shadow 0.05s ease-in-out;
+    transition: box-shadow 0.05s ease-in-out;
+}
+
+.btn.btn-def3:active, .btn.btn-def3.active {
+    background-color: #d4d4d4;
+    border-color: #adadad;
+
+    -webkit-box-shadow: 0 0 5px #818d9d inset;
+    -moz-box-shadow: 0 0 5px #818d9d inset;
+    box-shadow: 0 0 5px #818d9d inset;
+}
+
+.btn-group.open .btn.btn-def3.dropdown-toggle {
+    background-color: #8c97a6;
+}
+
+.btn.btn-def3-gray {
+    background-color: #eee;
+}
+
+.no-bold-after::after { /* fix for bootstrap's custom-file-label */
+    font-weight: normal;
+}
+
+/* Boostrap really missing it to override style applied to some parent element (e.g <select> is italic, but we need normal <option>'s).
+   It's so simple! Why it's not in Bootstrap?!
+ */
+.font-style-normal {
+    font-style: normal;
+}
+
+/* reset to initial values */
+.initial-font {
+    font-size: initial; /* !important; */
+}
+
+.position-absolute-0 {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+}
+
+.top-0 { top: 0; }
+.bottom-0 { bottom: 0; }
+.left-0 { left: 0; }
+.right-0 { right: 0; }
+
+.margin-0-auto {
+        margin: 0 auto;
+}
+
+.line-1 {
+    line-height: 1;
+}
+.line-12 {
+    line-height: 1.2;
+}
+
+.text-muted-p1 { /* muted +11 lighter on each color channel */
+    color: #7d868e; /* #6c757d is original .text-muted in Bootstrap v4 */
+}
+/* // we don't really need this. It's unreadable, not just muted.
+.text-muted-p2 { // +22
+    color: #8e979f;
+}*/
+
+.rounded-1 {
+    border-radius: .25em;
+}
+.rounded-2 {
+    border-radius: .5em;
+}
+.rounded-3 {
+    border-radius: 1em;
+}
+.rounded-4 {
+    border-radius: 1.5em;
+}
+.rounded-5 {
+    border-radius: 2em;
+}
+
+
+/* Sizes for icons. In relative "em" units. */
+img.wh-12em {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+img.wh-22em {
+    width: 2.2em;
+    height: 2.2em;
+}
+
+img.wh-24em {
+    width: 2.4em;
+    height: 2.4em;
+}
+
+img.wh-36em {
+    width: 3.6em;
+    height: 3.6em;
+}
+
+img.wh-40em {
+    width: 4em;
+    height: 4em;
+}
+
+img.wh-48em {
+    width: 4.8em;
+    height: 4.8em;
+}
+
+img.wh-60em {
+    width: 6em;
+    height: 6em;
+}
+
+
+/* Fixx for twitter-typeahead from https://github.com/twitter/typeahead.js/issues/302 */
+.input-group>.twitter-typeahead {
+    position: relative;
+    -ms-flex: 1 1 auto;
+    -webkit-box-flex: 1;
+    flex: 1 1 auto;
+    width: 1%;
+    margin-bottom: 0;
+}
+.input-group>.twitter-typeahead:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.input-group>.twitter-typeahead>.tt-input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.form-control.tt-input:focus {
+    z-index: 3;
+}
+/* Fixx input background on FireFox only */
+.tt-input::-moz-selection {
+  color: #FFF;
+  background: #3390FF;
+}
+
+
+/* More typeahead styles */
+.tt-hint {
+    color: #999 !important; /* important to override form-control. BTW, it's good for use as input.tt-hint, to display suggestions. */
+}
+
+.tt-menu {
+  background-color: #fff;
+/*
+  border: 1px solid #ccc;
+*/
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  -webkit-border-radius: 0 0 8px 8px;
+     -moz-border-radius: 0 0 8px 8px;
+          border-radius: 0 0 8px 8px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+}
+
+.tt-suggestion {
+  padding: 3px 20px;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.tt-suggestion div.sub {
+  color: #333;
+  font-size: .8em;
+}
+
+.tt-suggestion:hover,
+.tt-suggestion.tt-cursor {
+  cursor: pointer;
+  color: #fff;
+  background-color: #0097cf; /*#85993C; /* #0097cf; */
+}
+.tt-suggestion:hover * {
+  color: #fff !important;
+}
+.tt-suggestion:hover div.sub,
+.tt-suggestion.tt-cursor div.sub {
+  color: #eee !important; /* important to override #fff !important */
+}
+.tt-suggestion:hover .text-muted,
+.tt-suggestion:hover .text-muted-p1,
+.tt-suggestion.tt-cursor .text-muted,
+.tt-suggestion.tt-cursor .text-muted-p1 {
+  color: #ccc !important; /* important to override #fff !important */
+}
+
+ul.typeahead strong {
+  display: inline;
+}
+
+
+
+/* Uniform placeholder color, which looks exactly everywhere.
+   It is known, that placeholder color is
+      In Chrome (Mac) it's #a9a9a9
+      In Firefox (Mac) it's #777777
+      Also Bootstrap 3 defines it as #999 (which is incompatible with look of Bootstrap 4.)
+      BTW, darkgray instead of #999 looks good as well.
+
+   So let's make it silver, italic and with some "sans-serif" font.
+   "bi" stands for bold-italic.
+
+   AK 12.05.2019: Мы вынуждены перечислять здесь ВСЕ стили, потому что некоторые считаются ошибочными, парсер прекращает работу (в Хроме так ) и не находит то что нам надо.
+  */
+.place-bi { /* not only <input> here. Editable <div> is OK too. */
+        font-weight: bold !important; /* !important to override Bootstap's "form-control" weight */
+}
+
+select.place-i option[value=""] { /* AK 16.05.2021: Important! There is no value="0" anymore. Because 0 is normal value for indexes, not null. */
+        font-style: italic;
+        font-weight: normal;
+}
+select.place-i option:not([value=""]) {
+        font-style: normal;
+        font-weight: normal;
+}
+
+/* - Chrome ≤56,
+   - Safari 5-10.0
+   - iOS Safari 4.2-10.2
+   - Opera 15-43
+   - Opera Mobile 12-12.1
+   - Android Browser 2.1-4.4.4
+   - Samsung Internet ≤6.2
+   - QQ Browser */
+.place-i::-webkit-input-placeholder,
+.place-bi::-webkit-input-placeholder {
+  color: #6c757d;
+  font-weight: normal !important; /* important to override !important of .place-bi (at least in IE, but for sure other browsers too.) */
+  font-style: italic;
+  font-family: var(--font-family-sans-serif);
+}
+/* Firefox 4-18 */
+.place-i:-moz-placeholder,
+.place-bi:-moz-placeholder {
+  color: #6c757d;
+  font-weight: normal !important; /* important to override !important of .place-bi (at least in IE, but for sure other browsers too.) */
+  font-style: italic;
+  font-family: var(--font-family-sans-serif);
+}
+/* Firefox 19-50 */
+.place-i::-moz-placeholder,
+.place-bi::-moz-placeholder {
+  color: #6c757d;
+  font-weight: normal !important; /* important to override !important of .place-bi (at least in IE, but for sure other browsers too.) */
+  font-style: italic;
+  font-family: var(--font-family-sans-serif);
+}
+/* - Internet Explorer 10-11
+   - Internet Explorer Mobile 10-11 */
+.place-i:-ms-input-placeholder,
+.place-bi:-ms-input-placeholder {
+  color: #6c757d;
+  font-weight: normal !important; /* important to override !important of .place-bi (at least in IE, but for sure other browsers too.) */
+  font-style: italic;
+  font-family: var(--font-family-sans-serif);
+}
+/* Edge (also supports ::-webkit-input-placeholder) */
+.place-i::-ms-input-placeholder,
+.place-bi::-ms-input-placeholder {
+  color: #6c757d;
+  font-weight: normal !important; /* important to override !important of .place-bi (at least in IE, but for sure other browsers too.) */
+  font-style: italic;
+  font-family: var(--font-family-sans-serif);
+}
+/* (Modern browsers)
+   CSS Pseudo-Elements Level 4 Editor's Draft
+   - Browsers not mentioned in vendor prefixes
+   - Browser of newer versions than mentioned in vendor prefixes */
+.place-i::placeholder,
+.place-bi::placeholder { /* Note... placeholders works only for editable <input> controls. It's useless for <select>'s. */
+  color: #6c757d;
+  font-weight: normal; /* important to override !important of .place-bi (at least in IE, but for sure other browsers too.) */
+  font-style: italic;
+  font-family: var(--font-family-sans-serif);
+}
+
+/* <input type="number" have arrow controls to close to right-aligned text. This is the fix for that behavior.
+https://stackoverflow.com/questions/32505389/how-can-i-add-padding-right-to-an-input-type-number-when-aligning-right
+*/
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+	margin-left: 4px;
+}
+
+
+/* --- ICON for the search field */
+/* enable absolute positioning */
+.inner-addon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* style icon */
+.inner-addon .glyphicon {
+  position: absolute;
+  padding-left: .55em; /* originally padding: 10px, but we want it for different font sizes */
+  pointer-events: none;
+  z-index: 2; /* above possible typeahead overlap */
+}
+
+.inner-addon > .twitter-typeahead,
+.inner-addon > .twitter-typeahead > pre {
+  width: 100%;
+}
+
+/* align icon */
+.left-addon .glyphicon  { left:  0; }
+.right-addon .glyphicon { right: 0; }
+
+/* add padding  */
+.left-addon input  { padding-left:  2.4em; /* originally 40px; */ }
+.right-addon input { padding-right: 2em; /* originally 30px; */ }
+
+
+
+/* Legacy of FAVOR */
+.singleline {
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bmaroon {
+  font-weight: bold;
+  color: maroon;
+}
+
+.bginfo { background-color: #FFFFDA !important; } /* it doesn't highlights input fields on bootstrap 4 for some reason :( */
+input.validate-bgwarn:invalid,
+.bgwarn { background-color: #FFFF9A !important; }
+input.validate-bgerror:invalid,
+.bgerror { background-color: #FFCECE !important; } /* "!important" to override input fields bg in case of invalid input. At least in FireFox. */
+.bggreen { background-color: #CFC; }
+.bgblue { background-color: #CFF; }
+.bg-eee { background-color: #EEE; }
+.bg-ddd { background-color: #DDD; }
+
+/* links */
+a.nounder, a.nounder:hover { /* Old good legacy "a.dashedspan" & "a.dashedspan:hover" is here. It's "nounder" now. */
+  text-decoration: none;
+}
+.dashed,
+a.dashed:hover,
+a.dashed-hover:hover { /* dashed-hover becomes dashed only on hover */
+  border-bottom: 1px dashed;
+  text-decoration: none;
+}
+
+span.outlink {
+  display: inline-block; /* This can be applied only to "single words". Don't add blocking to a.outerlinks!
+                            See also "last_world_class()" function from "strings.php". */
+}
+span.outlink,
+a.outlink { /* play with outlink at https://jsfiddle.net/utilmind/5y6t2vaL/ */
+  /* display: inline-block; // Don't make "display" blocking. This makes impossible to align pictures (to left or right) in the same text block.
+                            // The link will always beneath the picture. Test on bounding your FAVOR user acc to some company with logo.
+   */
+  padding-right: 0.55em; /* add padding to make image non-wrapable. */
+}
+span.outlink::after,
+a.outlink::after {
+  content: '';
+  background: no-repeat center url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23333%22%20stroke-dasharray%3D%221.1%22%20d%3D%22M.5.5h9v9h-9z%22%2F%3E%3Cpath%20stroke%3D%22%23333%22%20stroke-linecap%3D%22round%22%20d%3D%22M7.6%202.33L2.33%207.6M7.6%202.33V7m0-4.67H3%22%2F%3E%3C%2Fsvg%3E);
+  vertical-align: middle;
+  width: 0.55em;
+  height: 0.55em;
+  min-width: 10px; /* it looks ugly if less than 10x10 */
+  min-height: 10px;
+  display: inline-block;
+  margin: 0 -0.55em 0.05em 0.2em; /* non-wrapable image */
+}
+
+/* NOTE: there is similar feature for input fields, "click-select". */
+output, .user-select {
+  -webkit-user-select: all; /* Safari 3.1+ */
+  -moz-user-select: all; /* Firefox 2+ */
+  -ms-user-select: all; /* IE 10+ */
+  user-select: all; /* Standard syntax */
+}
+
+/* Footer navigation (used in Calculium, Theranotes and Pasfotocabines). Use additional custom styles to override them, but I think they are ok to be common. */
+.bt-gray-dot {
+  border-top: 1px dotted gray;
+}
+
+div.footline { /* see also @media (max-width: 768px) -- we also disable padding on mobiles! */
+  display: flex;
+  flex-wrap: nowrap !important;
+  overflow: hidden;
+  align-items: center; /* everthing inside is vertically centered */
+}
+div.footline > * {
+  white-space: nowrap; /* everything in single line */
+}
+div.footline > ul {
+  flex-grow: 1;
+  padding: 0;
+  margin: 0;
+/*
+  list-style: none;
+ */
+}
+
+div.footline > ul > li {
+  display: inline;
+  padding-right: 0.8em;
+  margin-right: 0.8em;
+  border-right: 1px dotted gray;
+}
+
+div.footline > ul > li:last-child {
+  border: 0;
+  margin-right: 0;
+}
+
+div.footline > div.copyright {
+  font-size: .8em;
+  font-weight: normal;
+}
+
+
+/* MORE BOOTSTRAP BUTTONS (social sharing) */
+.btn-facebook {
+  background-color: #3B5998 !important; /* important required, unfortunately, to override Bootstrap's button styles. */
+  color: white !important;
+}
+.btn-telegram {
+  background-color: #3BAFEE !important;
+  color: white !important;
+}
+.btn-twitter {
+  background-color: #1DA1F2 !important;
+  color: white !important;
+}
+
+
+/* RESPONSIVE FONT ETC. */
+main.main, table.main { /* XL- */
+    font-size: 1.4rem; /*5? */
+}
+
+@media (max-width: 1200px) { /* LG- */
+        main.main, table.main {
+                font-size: 1.35rem; /*4? */
+        }
+}
+@media (max-width: 992px) {  /* MD- */
+        main.main, table.main {
+                font-size: 1.3rem;
+        }
+        .to-md-center {  /* .fullwidthm on legacy FAVOR */
+                width: 100% !important;
+                min-width: 0 !important;
+                display: block !important;
+                float: none !important;
+                margin: 0 auto 1em auto !important;
+        }
+}
+@media (max-width: 768px) {  /* SM- */
+        main.main, table.main {
+                font-size: 1.2rem;
+        }
+        .to-sm-center {
+                width: 100% !important;
+                min-width: 0 !important;
+                display: block !important;
+                float: none !important;
+                margin: 0 auto 1em auto !important;
+        }
+        div.footline {
+                padding: 0;
+        }
+}
+@media (max-width: 576px) {  /* XS- */
+        main.main, table.main  {
+                font-size: 1.1rem;
+        }
+}
+@media (max-width: 420px) {  /* XXS? */
+        main.main, table.main {
+                font-size: 1rem;
+        }
+}
+
+/* !!MIN WIDTHS!! */
+.f1rem {
+	font-size: 1rem; /* used to restore any font. Almost the same as Bootstrap's .h6, but not makes the test bold. */
+}
+.f13 {
+	font-size: 1.3em;
+}
+.f12 {
+        font-size: 1.2em;
+}
+.f11 {
+        font-size: 1.1em;
+}
+.f9 {
+        font-size: 0.9em;
+}
+.f8, .small {
+        font-size: 0.8em;
+}
+.f7, .smaller {
+        font-size: 0.7em;
+}
+.f6 {
+        font-size: 0.6em;
+}
+.f5 {
+        font-size: 0.5em;
+}
+.small, .smaller { /* Same as f8/f7, but also normalize bold text */
+        font-weight: normal;
+}
+/* See also "lg/md/sm/xs-normal" for font-size: 1em. */
+
+@media (min-width: 420px) { /* XS+ */
+        .xs-f12 {
+                font-size: 1.2em;
+        }
+        .xs-f11 {
+                font-size: 1.1em;
+        }
+        .xs-f9 {
+                font-size: 0.9em;
+        }
+        .xs-f8, .xs-small {
+                font-size: 0.8em;
+        }
+        .xs-f7, .xs-smaller {
+                font-size: 0.7em;
+        }
+        .xs-normal {
+                font-size: 1em;
+        }
+}
+@media (min-width: 576px) { /* SM+ */
+	.position-sm-relative {
+		position: relative;
+	}
+	.position-sm-absolute {
+		position: absolute;
+	}
+
+	.w-sm-auto { /* bootstrap addon */
+		width: auto !important; /* important to override w-100 */
+	}
+
+        .sm-f12 {
+                font-size: 1.2em;
+        }
+        .sm-f11 {
+                font-size: 1.1em;
+        }
+        .sm-f9 {
+                font-size: 0.9em;
+        }
+        .sm-f8, .sm-small {
+                font-size: 0.8em;
+        }
+        .sm-f7, .sm-smaller {
+                font-size: 0.7em;
+        }
+        .sm-normal {
+                font-size: 1em;
+        }
+}
+@media (min-width: 768px) { /* MD+ */
+        .container-fluid-md { /* Used in footer of Calculium, pasfotocabine, therantoes etc.
+                                 Prevents wrapping the footer link items. Makes the footer fluid to full width of window.
+                               */
+                width: 100% !important; /* yes, important required. */
+                max-width: none !important; /* yes, important. */
+        }
+        .md-f12 {
+                font-size: 1.2em;
+        }
+        .md-f11 {
+                font-size: 1.1em;
+        }
+        .md-f9 {
+                font-size: 0.9em;
+        }
+        .md-f8, .md-small {
+                font-size: 0.8em;
+        }
+        .md-f7, .md-smaller {
+                font-size: 0.7em;
+        }
+        .md-normal {
+                font-size: 1em;
+        }
+}
+@media (min-width: 992px) { /* LG+ */
+        .lg-f12 {
+                font-size: 1.2em;
+        }
+        .lg-f11 {
+                font-size: 1.1em;
+        }
+        .lg-f9 {
+                font-size: 0.9em;
+        }
+        .lg-f8, .lg-small {
+                font-size: 0.8em;
+        }
+        .lg-f7. .lg-smaller {
+                font-size: 0.7em;
+        }
+        .lg-normal {
+                font-size: 1em;
+        }
+        .text-lg-nowrap { /* addon to Bootstrap 4 */
+                white-space: nowrap;
+        }
+}
+@media (min-width: 1200px) { /* XL+ */
+        .xl-f12 {
+                font-size: 1.2em;
+        }
+        .xl-f11 {
+                font-size: 1.1em;
+        }
+        .xl-f9 {
+                font-size: 0.9em;
+        }
+        .xl-f8, .xl-small {
+                font-size: 0.8em;
+        }
+        .xl-f7. .xl-smaller {
+                font-size: 0.7em;
+        }
+        .xl-normal {
+                font-size: 1em;
+        }
+}
+
+
+/* PRINTING */
+.unbreak {
+        page-break-inside: avoid;
+}
+
+
+/* MISC */
+.w-1px { /* less as possible. Good together with "margin-0-auto" */
+        width: 1px;
+}
