@@ -87,59 +87,59 @@
         umSuggestags.prototype = {
 
                 init : function(settings, method) {
-                        var _self = this,
-                            $selfSelector = $(_self.selector), // original input control
-                            items = $selfSelector.val().split(","); // keep it before "refresh".
+                    var _self = this,
+                        $selfSelector = $(_self.selector), // original input control
+                        items = $selfSelector.val().split(","); // keep it before "refresh".
 
-                        // mergin default settings with custom
-                        if (settings)
-                            _self.settings = $.extend(true, {}, _self.settings, settings);
+                    // mergin default settings with custom
+                    if (settings)
+                        _self.settings = $.extend(true, {}, _self.settings, settings);
 
-                        if (!method) { // create
-                            _self.createHTML();
-                            _self.setEvents();
+                    if (!method) { // create
+                        _self.createHTML()
+                            .setEvents();
 
-                            var $tagsInput = $(_self.selectors.sTagsInput);
-                            if ($selfSelector.is(":focus"))
-                                $tagsInput.trigger("focus");
+                        var $tagsInput = $(_self.selectors.sTagsInput);
+                        if ($selfSelector.is(":focus"))
+                            $tagsInput.trigger("focus");
 
-                            // hide original input control
-                            $selfSelector.hide()
-                                // ...and redorect any possible focus events
-                                .on("focus", function(e) {
-                                    $tagsInput.trigger("focus", e);
-                                });
-
-                        }else if (method) {
-                            if ("destroy" === method) {
-                              // remove EVERYTHING. All controls
-                              var $findTags = $selfSelector.next(_self.classes.sTagsArea);
-                              if ($findTags.length)
-                                $findTags.remove();
-
-                              // restore original <input>. TODO: do we need to return focus if input is focused?
-                              $selfSelector.show();
-                              return;
-
-                            }else if ("refresh" === method)
-                              _self.removeTag(false);
-                        }
-
-
-                        // convert current <input> value into tags.
-                        if (items.length) {
-                            $.each(items, function(index, item) {
-                                _self.addTag(item.trim());
+                        // hide original input control
+                        $selfSelector.hide()
+                            // ...and redorect any possible focus events
+                            .on("focus", function(e) {
+                                $tagsInput.trigger("focus", e);
                             });
-                        }
+
+                    }else if (method) {
+                        if ("destroy" === method) {
+                            // remove EVERYTHING. All controls
+                            var $findTags = $selfSelector.next(_self.classes.sTagsArea);
+                            if ($findTags.length)
+                            $findTags.remove();
+
+                            // restore original <input>. TODO: do we need to return focus if input is focused?
+                            $selfSelector.show();
+                            return;
+
+                        }else if ("refresh" === method)
+                            _self.removeTag(false);
+                    }
+
+
+                    // convert current <input> value into tags.
+                    if (items.length) {
+                        $.each(items, function(index, item) {
+                            _self.addTag(item.trim());
+                        });
+                    }
                 },
 
                 createHTML : function() {
-                        var i, _self = this,
-                            selectors = _self.selectors,
-                            selfSelector = _self.selector,
-                            $selfSelector = $(selfSelector),
-                            selfSelectorId = $selfSelector.attr("id");
+                    var i, _self = this,
+                        selectors = _self.selectors,
+                        selfSelector = _self.selector,
+                        $selfSelector = $(selfSelector),
+                        selfSelectorId = $selfSelector.attr("id");
 
                         selectors.sTagsArea = $('<div class="' + _self.classes.sTagsArea.substr(1) + '"></div>')
                                                          .insertAfter(selfSelector);
@@ -155,181 +155,198 @@
                                                        '></div>')
                                                            .appendTo(selectors.inputArea); // also here was .attr("autocomplete", "off"), but this is unnamed <div>, not <input> anymore.
 
-                        if ($selfSelector.attr("required")) {
-                                $selfSelector.removeAttr("required");
-                                _self.isRequired = true;
-                                _self.updateIsRequired();
-                        }
+                    if ($selfSelector.attr("required")) {
+                            $selfSelector.removeAttr("required");
+                            _self.isRequired = true;
+                            _self.updateIsRequired();
+                    }
 
-                        selectors.listArea  = $('<div class="'+_self.classes.listArea.substr(1)+'"></div>')
-                                                         .appendTo(selectors.sTagsArea)
-                                                         .css("min-width", _self.settings.minSuggestionWidth); // TODO: research, whether jQuery's css() are safe for Content-Security-Policy. If no -- set up style directly as described on https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src
+                    selectors.listArea  = $('<div class="'+_self.classes.listArea.substr(1)+'"></div>')
+                                                        .appendTo(selectors.sTagsArea)
+                                                        .css("min-width", _self.settings.minSuggestionWidth); // TODO: research, whether jQuery's css() are safe for Content-Security-Policy. If no -- set up style directly as described on https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src
 
-                        selectors.list      = $('<ul class="'+_self.classes.list.substr(1)+'"></ul>')
-                                                         .appendTo(selectors.listArea);
+                    selectors.list      = $('<ul class="'+_self.classes.list.substr(1)+'"></ul>')
+                                                        .appendTo(selectors.listArea);
 
-                        _self.updateSuggestionList();
+                    _self.updateSuggestionList();
 
 
-                        // AK 13.06.2020: redirect focus from hidden control to our new editable div.
-                        // (Unfortunately we can't focus setting up new ID and overriding FOR. It won't focus contenteditable <div>, only <input>'s. Explanation at https://stackoverflow.com/questions/54792126/html-label-with-for-div-id-to-focus-a-contenteditable-div-does-label-label
-                        // So hooking an event.)
-                        if (selfSelectorId) {
-                            $('label[for="' + selfSelectorId + '"]').on("click", function() {
-                                // it won't focus immediately after click, so let's focus when this thread is about to finish
-                                setTimeout(function() {
-                                    $(selectors.sTagsInput).focus(); // set input focus
-                                }, 0);
-                            });
-                        }
+                    // AK 13.06.2020: redirect focus from hidden control to our new editable div.
+                    // (Unfortunately we can't focus setting up new ID and overriding FOR. It won't focus contenteditable <div>, only <input>'s. Explanation at https://stackoverflow.com/questions/54792126/html-label-with-for-div-id-to-focus-a-contenteditable-div-does-label-label
+                    // So hooking an event.)
+                    if (selfSelectorId) {
+                        $('label[for="' + selfSelectorId + '"]').on("click", function() {
+                            // it won't focus immediately after click, so let's focus when this thread is about to finish
+                            setTimeout(function() {
+                                $(selectors.sTagsInput).focus(); // set input focus
+                            }, 0);
+                        });
+                    }
+
+                    return _self;
                 },
 
                 updateIsRequired : function() {
-                        var attrRequired = "required",
-                            _self = this,
-                            $input = $(_self.selectors.sTagsInput);
+                    var attrRequired = "required",
+                        _self = this,
+                        $input = $(_self.selectors.sTagsInput);
 
-                        if (_self.isRequired) {
-                                if (_self.tagNames.length)
-                                        $input.removeAttr(attrRequired);
-                                else
-                                        $input.attr(attrRequired, attrRequired);
-                        }
+                    if (_self.isRequired) {
+                        if (_self.tagNames.length)
+                            $input.removeAttr(attrRequired);
+                        else
+                            $input.attr(attrRequired, attrRequired);
+                    }
                 },
 
                 updateSuggestionList : function() {
-                        $(this.selectors.list).html("");
-                        $(this.createList()).appendTo(this.selectors.list);
+                    var _self = this;
+
+                    $(_self.selectors.list).html("");
+                    $(_self.createList()).appendTo(this.selectors.list);
+
+                    return _self;
                 },
 
                 setEvents : function() {
-                        var _self = this;
+                    var _self = this,
 
-                        $(_self.selectors.inputArea).attr("style", $(_self.selector).attr("style")).addClass($(_self.selector).attr("class"));
+                        $selfSelector = $(_self.selector),
+                        $inputArea = $(_self.selectors.inputArea),
 
-                        _self.setTagEvents();
-                        _self.setSuggestionsEvents();
-                        _self.setRemoveEvent();
+                        controlStyles = $selfSelector.attr("style");
+
+                    // Always avoid using inline styles!
+                    if (controlStyles)
+                        $inputArea.attr("style", controlStyles);
+
+                    $inputArea.addClass($selfSelector.attr("class"));
+
+                    _self.setTagEvents()
+                            .setSuggestionsEvents()
+                            .setRemoveEvent();
                 },
 
                 setTagEvents : function() {
-                        var _self = this,
-                            settings = _self.settings,
-                            selectors = _self.selectors,
-                            $suggestList = $(selectors.listArea),
-                            $input = $(selectors.sTagsInput),
+                    var _self = this,
+                        settings = _self.settings,
+                        selectors = _self.selectors,
+                        $suggestList = $(selectors.listArea),
+                        $input = $(selectors.sTagsInput),
 
-                            appendTag = function(_instance, $input, hasDelimiter) {
-                                var value = $input.text().trim();
-                                if (hasDelimiter) {
-                                    // remove all characters used as delimiters from the appended value
-                                    $.each(_instance.settings.delimiters, function(dkey, delimiter) {
-                                        value = value.replace(delimiter, "").trim();
-                                    });
-                                }
-
-                                $input.text(""); // AK: originally was used .val() for input field instead of .text().
-                                _instance.addTag(_instance.getValue(value));
-                                if (_instance.settings.showAllSuggestions) {
-                                    _instance.suggestWhiteList("", 0, 1);
-                                }
-                            };
-
-                        $input.on("focus", function() {
-                            var $inputParent = $(this).parent();
-
-                            if (settings.showAllSuggestions)
-                                _self.suggestWhiteList("", 0, 1);
-
-                            $inputParent.closest(_self.classes.inputArea).addClass(_self.classes.focus.substr(1));
-                        })
-
-                        .on("blur", function() {
-                            var $input = $(this); // we already have $input above, but this is for sure that we're in correct instance
-
-                            $input.closest(_self.classes.inputArea).removeClass(_self.classes.focus.substr(1));
-
-                            if ($input.text()) { // AK: originally used .val() for input field instead of .text().
-                                if (settings.addTagOnBlur)
-                                    appendTag(_self, $input);
-                            }else {
-                                $suggestList.hide();
+                        appendTag = function(_instance, $input, hasDelimiter) {
+                            var value = $input.text().trim();
+                            if (hasDelimiter) {
+                                // remove all characters used as delimiters from the appended value
+                                $.each(_instance.settings.delimiters, function(dkey, delimiter) {
+                                    value = value.replace(delimiter, "").trim();
+                                });
                             }
-                        })
 
-                        .on("keydown", function(e) {
-                                var key = e.keyCode;
+                            $input.text(""); // AK: originally was used .val() for input field instead of .text().
+                            _instance.addTag(_instance.getValue(value));
+                            if (_instance.settings.showAllSuggestions) {
+                                _instance.suggestWhiteList("", 0, 1);
+                            }
+                        };
 
-                                // when limit reached we shouldn't allow to type anything, although control is focusable.
-                                if (_self.isLimitReached() &&
-                                    ((48 < key) && // 48 is "0". All other keys before 0 is control keys (like backspace, enter, tab, escape etc), so the are OK.
-                                     !((112 <= key) && (123 >= key)))) { // ! F1..F12
-                                      e.preventDefault();
-                                }
-                        })
+                    $input.on("focus", function() {
+                        var $inputParent = $(this).parent();
 
-                        .on("keyup", function(e) {
-                                var $input = $(this), // we already have $input above, but this is for sure that we're in correct instance
-                                    inputText = $input.text(),
-                                    key = e.key;
+                        if (settings.showAllSuggestions)
+                            _self.suggestWhiteList("", 0, 1);
 
-                                if (key) {
-                                    // AK 14.06.2020: I don't trust to e.key anymore. Sometimes (and totally randomly) it don't recognize non-latin keyboard layout and shows ".", when user typed ",".
-                                    // UPD. It trigging keyup twice on cyrrillic layout. 1st key is Shift, 2nd is ".". But shift+"." is "," on cyrillic layout!
-                                    // UPD. It's so easy to reproduce. Press shift, immediately unhold it and type ".". Again, Shift, then "." lightning quickly, without holding Shift.
-                                    // So let's check last character to know it for sure.
-                                    if (("Shift" === key) && ("," === inputText.substr(-1)))
-                                        key = ",";
+                        $inputParent.closest(_self.classes.inputArea).addClass(_self.classes.focus.substr(1));
+                    })
 
-                                }else if (13 === e.keyCode)
-                                    key = "Enter";
-                                else if (27 === e.keyCode)
-                                    key = "Escape";
-                                else if (188 === e.keyCode)
+                    .on("blur", function() {
+                        var $input = $(this); // we already have $input above, but this is for sure that we're in correct instance
+
+                        $input.closest(_self.classes.inputArea).removeClass(_self.classes.focus.substr(1));
+
+                        if ($input.text()) { // AK: originally used .val() for input field instead of .text().
+                            if (settings.addTagOnBlur)
+                                appendTag(_self, $input);
+                        }else {
+                            $suggestList.hide();
+                        }
+                    })
+
+                    .on("keydown", function(e) {
+                        var key = e.keyCode;
+
+                        // when limit reached we shouldn't allow to type anything, although control is focusable.
+                        if (_self.isLimitReached() &&
+                            ((48 < key) && // 48 is "0". All other keys before 0 is control keys (like backspace, enter, tab, escape etc), so the are OK.
+                                !((112 <= key) && (123 >= key)))) { // ! F1..F12
+                                e.preventDefault();
+                        }
+                    })
+
+                    .on("keyup", function(e) {
+                            var $input = $(this), // we already have $input above, but this is for sure that we're in correct instance
+                                inputText = $input.text(),
+                                key = e.key;
+
+                            if (key) {
+                                // AK 14.06.2020: I don't trust to e.key anymore. Sometimes (and totally randomly) it don't recognize non-latin keyboard layout and shows ".", when user typed ",".
+                                // UPD. It trigging keyup twice on cyrrillic layout. 1st key is Shift, 2nd is ".". But shift+"." is "," on cyrillic layout!
+                                // UPD. It's so easy to reproduce. Press shift, immediately unhold it and type ".". Again, Shift, then "." lightning quickly, without holding Shift.
+                                // So let's check last character to know it for sure.
+                                if (("Shift" === key) && ("," === inputText.substr(-1)))
                                     key = ",";
 
-                                if ("Escape" === key) {
-                                        $suggestList.hide(); // hide the list of suggestions
-                                        if (settings.clearOnEsc) $input.text("");
-                                        return;
-                                }
+                            }else if (13 === e.keyCode)
+                                key = "Enter";
+                            else if (27 === e.keyCode)
+                                key = "Escape";
+                            else if (188 === e.keyCode)
+                                key = ",";
 
-                                var isDelimiter = -1 !== $.inArray(key, settings.delimiters),
-                                    isEnter = key === "Enter";
+                            if ("Escape" === key) {
+                                    $suggestList.hide(); // hide the list of suggestions
+                                    if (settings.clearOnEsc) $input.text("");
+                                    return;
+                            }
 
-                                if (isDelimiter || isEnter) {
-                                        if (isEnter && ("" === inputText)) {
-                                                $input.closest("form").submit(); // act like a normal <input> box. Submit on enter.
+                            var isDelimiter = -1 !== $.inArray(key, settings.delimiters),
+                                isEnter = key === "Enter";
 
-                                        }else {
-                                                appendTag(_self, $input, isDelimiter);
-                                        }
+                            if (isDelimiter || isEnter) {
+                                    if (isEnter && ("" === inputText)) {
+                                            $input.closest("form").submit(); // act like a normal <input> box. Submit on enter.
 
-                                }else if (8 === e.keyCode && !$input.text()) { // AK: originally used .val() for input field instead of .text().
-                                        var removeClass = _self.classes.readyToRemove.substr(1);
-                                        if (_self.isLimitReached() || $input.hasClass(removeClass)) {
-                                                _self.removeTagByItem($input.closest(_self.classes.inputArea).find(_self.classes.tagItem + ":last"), false);
-                                        }else {
-                                                $input.addClass(removeClass); // so next time last item will be removed on backspace.
-                                        }
-                                        $suggestList.hide();
-                                        if (settings.showAllSuggestions) {
-                                                _self.suggestWhiteList("", 0, 1);
-                                        }
-                                }else if ((settings.suggestions.length || _self.isSuggestAction()) && ($input.text() || settings.showAllSuggestions)) { // AK: originally used .val() for input field instead of .text().
-                                        $input.removeClass(_self.classes.readyToRemove.substr(1));
-                                        _self.processWhiteList(e.keyCode, $input.text()); // AK: originally used .val() for input field instead of .text().
-                                }
-                        })
+                                    }else {
+                                            appendTag(_self, $input, isDelimiter);
+                                    }
 
-                        .on("keypress", function(e) {
-                                if (13 === e.keyCode) return false;
-                        });
+                            }else if (8 === e.keyCode && !$input.text()) { // AK: originally used .val() for input field instead of .text().
+                                    var removeClass = _self.classes.readyToRemove.substr(1);
+                                    if (_self.isLimitReached() || $input.hasClass(removeClass)) {
+                                            _self.removeTagByItem($input.closest(_self.classes.inputArea).find(_self.classes.tagItem + ":last"), false);
+                                    }else {
+                                            $input.addClass(removeClass); // so next time last item will be removed on backspace.
+                                    }
+                                    $suggestList.hide();
+                                    if (settings.showAllSuggestions) {
+                                            _self.suggestWhiteList("", 0, 1);
+                                    }
+                            }else if ((settings.suggestions.length || _self.isSuggestAction()) && ($input.text() || settings.showAllSuggestions)) { // AK: originally used .val() for input field instead of .text().
+                                    $input.removeClass(_self.classes.readyToRemove.substr(1));
+                                    _self.processWhiteList(e.keyCode, $input.text()); // AK: originally used .val() for input field instead of .text().
+                            }
+                    })
 
-                        $(selectors.sTagsArea).on("click", function() {
-                                if (!$input.is(":focus"))
-                                        $input.trigger("focus");
-                        });
+                    .on("keypress", function(e) {
+                        if (13 === e.keyCode) return false;
+                    });
+
+                    $(selectors.sTagsArea).on("click", function() {
+                        if (!$input.is(":focus"))
+                            $input.trigger("focus");
+                    });
+
+                    return _self;
                 },
 
                 setSuggestionsEvents : function() {
@@ -361,54 +378,55 @@
                                 $(selectors.sTagsInput).text("").focus(); // AK: originally used .val() for input field instead of .text().
                         });
 
+                        return _self;
                 },
 
                 isLimitReached: function() {
-                        var _self = this,
-                            tagLimit = _self.settings.tagLimit;
-                        return (0 < tagLimit) && (_self.tagNames.length >= tagLimit);
+                    var _self = this,
+                        tagLimit = _self.settings.tagLimit;
+                    return (0 < tagLimit) && (_self.tagNames.length >= tagLimit);
                 },
 
                 isSuggestAction : function() {
-                        return this.settings.suggestionsAction && this.settings.suggestionsAction.url;
+                    return this.settings.suggestionsAction && this.settings.suggestionsAction.url;
                 },
 
                 getTag : function(value) {
-                        if (this.settings.suggestions.length) {
-                                var tag = value;
+                    if (this.settings.suggestions.length) {
+                        var tag = value;
 
-                                $.each(this.settings.suggestions, function(key, item) {
-                                        if (("object" === typeof item) && (item.value === value)) {
-                                                tag = item.tag;
-                                                return false; // break each()
+                        $.each(this.settings.suggestions, function(key, item) {
+                                if (("object" === typeof item) && (item.value === value)) {
+                                        tag = item.tag;
+                                        return false; // break each()
 
-                                        }else if (item === value) {
-                                                return false; // break each()
-                                        }
-                                });
+                                }else if (item === value) {
+                                        return false; // break each()
+                                }
+                        });
 
-                                value = tag;
-                        }
-                        return value;
+                        value = tag;
+                    }
+                    return value;
                 },
 
                 getValue : function(tag) {
-                        if (this.settings.suggestions.length) {
-                                var value = tag,
-                                    lower = tag.toLowerCase();
+                    if (this.settings.suggestions.length) {
+                        var value = tag,
+                            lower = tag.toLowerCase();
 
-                                $.each(this.settings.suggestions, function(key, item) {
-                                        if (("object" === typeof item) && lower === item.tag.toLowerCase()) {
-                                                value = item.value;
-                                                return false; // break each()
+                        $.each(this.settings.suggestions, function(key, item) {
+                                if (("object" === typeof item) && lower === item.tag.toLowerCase()) {
+                                        value = item.value;
+                                        return false; // break each()
 
-                                        }else if (lower === item.toLowerCase()) {
-                                                return false; // break each()
-                                        }
-                                });
-                                return value;
-                        }
-                        return tag;
+                                }else if (lower === item.toLowerCase()) {
+                                        return false; // break each()
+                                }
+                        });
+                        return value;
+                    }
+                    return tag;
                 },
 
                 processAjaxSuggestion : function(value, keycode) {
@@ -433,12 +451,11 @@
                                 return URL;
                             },
 
-                            params          = {
-                                                 existingTags: _self.tagNames,
-                                                 existing: settings.suggestions,
-                                                 term: value,
-                                              },
-                            ajaxConfig      = settings.suggestionsAction.callbacks || {},
+                            params  = {
+                                    existingTags: _self.tagNames,
+                                    existing: settings.suggestions,
+                                    term: value,
+                                },
 
                             ajaxFormParams  = {
                                 url : getActionURL(settings.suggestionsAction.url),
@@ -451,31 +468,31 @@
                                         var present = 0;
 
                                         if (result.length) {
-                                          $.each(result, function(i, e) {
-                                              if ("object" === typeof e) {
-                                                  if (e.value === element.value)
-                                                      present = 1;
-                                              }else {
-                                                  if (e === element.value)
-                                                      present = 1;
-                                              }
-                                              if (present) return false; // break each()
-                                          });
+                                            $.each(result, function(i, e) {
+                                                if ("object" === typeof e) {
+                                                    if (e.value === element.value)
+                                                        present = 1;
+                                                }else {
+                                                    if (e === element.value)
+                                                        present = 1;
+                                                }
+                                                if (present) return false; // break each()
+                                            });
                                         }
 
                                         return present;
                                     };
 
                                 $.each(list, function(i, e) {
-                                        if ("object" === typeof e) {
-                                                if (!_self.objectInArray(e, result)) {
-                                                        result.push(e);
-                                                }
-                                        }else {
-                                                if (-1 === $.inArray(e, result)) {
-                                                        result.push(e);
-                                                }
+                                    if ("object" === typeof e) {
+                                        if (!_self.objectInArray(e, result)) {
+                                            result.push(e);
                                         }
+                                    }else {
+                                        if (-1 === $.inArray(e, result)) {
+                                            result.push(e);
+                                        }
+                                    }
                                 });
 
                                 return result;
@@ -500,9 +517,9 @@
                                 if (data && data.suggestions) {
                                         settings.suggestions = $.merge(settings.suggestions, data.suggestions);
                                         settings.suggestions = _self.unique(settings.suggestions);
-                                        _self.updateSuggestionList();
-                                        _self.setSuggestionsEvents();
-                                        _self.suggestWhiteList(value, keycode);
+                                        _self.updateSuggestionList()
+                                             .setSuggestionsEvents()
+                                             .suggestWhiteList(value, keycode);
                                 }
 
                                 if ("function" === typeof settings.suggestionsAction.success) {
@@ -550,8 +567,8 @@
 
                 upDownSuggestion : function(value, type) {
                         var _self     = this,
-                            isActive  = 0,
-                            $input = $(_self.selectors.sTagsInput);
+                            isActive  = 0;
+                            //$input = $(_self.selectors.sTagsInput);
 
                         $(_self.selectors.listArea).find(_self.classes.listItem + ":visible").each(function() {
                                 var $item = $(this);
@@ -584,23 +601,23 @@
                 },
 
                 setInputText : function(value) {
-                        var $input = $(this.selectors.sTagsInput),
+                    var $input = $(this.selectors.sTagsInput),
 
-                            // this function moves input cursor to the end of editable <div>. For <input>'s we should use different code, see setSelectionRange().
-                            cursorToEnd = function() {
-                                var textLen = $input.text().length,
-                                    input = $input[0],
-                                    range = document.createRange(),
-                                    sel = window.getSelection();
+                        // this function moves input cursor to the end of editable <div>. For <input>'s we should use different code, see setSelectionRange().
+                        cursorToEnd = function() {
+                            var textLen = $input.text().length,
+                                input = $input[0],
+                                range = document.createRange(),
+                                sel = window.getSelection();
 
-                                range.setStart(input.childNodes[0], textLen);
-                                range.collapse(true);
-                                sel.removeAllRanges();
-                                sel.addRange(range);
-                            };
+                            range.setStart(input.childNodes[0], textLen);
+                            range.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        };
 
-                        $input.text(value); // AK: originally used .val() for input field instead of .text().
-                        cursorToEnd();
+                    $input.text(value); // AK: originally used .val() for input field instead of .text().
+                    cursorToEnd();
                 },
 
                 suggestWhiteList : function(value, keycode, showAll) {
@@ -615,19 +632,16 @@
 
                         var $list = $listArea.find(this.classes.list);
                         $list.find(_self.classes.listItem).each(function() {
-                                var $item = $(this),
-                                    dataVal = $item.data("val");
+                            var $item = $(this),
+                                dataVal = $item.data("val");
 
-                                if ($.isNumeric(dataVal)) {
-                                        dataVal = (-1 === value.indexOf(".")) ? parseInt(dataVal) : parseFloat(dataVal);
-                                }
-                                if ((!!showAll || ~$item.text().toLowerCase().indexOf(lower)) && (-1 === $.inArray(dataVal, _self.tagNames))) {
-                                        $item.attr("data-show", 1);
-                                        found = 1;
-                                }else {
-                                        $item.removeAttr("data-show");
-                                }
-                                $item.hide();
+                            if ((!!showAll || ~$item.text().toLowerCase().indexOf(lower)) && (-1 === $.inArray(dataVal, _self.tagNames))) {
+                                $item.attr("data-show", 1);
+                                found = 1;
+                            }else {
+                                $item.removeAttr("data-show");
+                            }
+                            $item.hide();
                         });
 
                         if (found) {
@@ -646,29 +660,29 @@
                                             startB = (b.substr(0, vLen).toLowerCase() === lowerVal);
 
                                         if (startA) {
-                                          if (!startB)
-                                            return -1;
+                                            if (!startB)
+                                                return -1;
                                         }else if (startB)
-                                          return 1;
+                                            return 1;
 
                                         return a.localeCompare(b);
                                 }).appendTo($list);
 
                                 if (settings.highlightSuggestion) {
-                                        $list.find(_self.classes.listItem).each(function() {
-                                                var $el = $(this),
+                                    $list.find(_self.classes.listItem).each(function() {
+                                        var $el = $(this),
 
-                                                    // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
-                                                    escapeRegExp = function(str) {
-                                                        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-                                                    };
+                                            // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+                                            escapeRegExp = function(str) {
+                                                return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                                            };
 
-                                                $el.html($el.text().replace(new RegExp("("+escapeRegExp(value)+")", "gi"), "<b>$1</b>"));
-                                        });
+                                        $el.html($el.text().replace(new RegExp("("+escapeRegExp(value)+")", "gi"), "<b>$1</b>"));
+                                    });
                                 }
 
                                 $dataShow.each(function() {
-                                        $(this).show();
+                                    $(this).show();
                                 });
 
                                 /**
@@ -711,11 +725,13 @@
                                         $listArea.hide();
                                 }
                         }
+
+                        return _self;
                 },
 
                 setRemoveEvent: function() {
                     var _self = this,
-                        $input = $(_self.selectors.sTagsInput),
+                        //$input = $(_self.selectors.sTagsInput),
                         $inputArea = $(_self.selectors.inputArea);
 
                     $inputArea.find(_self.classes.removeTag).on("click", function(e) {
@@ -726,103 +742,101 @@
 
                         $(_self.selectors.sTagsInput).trigger("focus"); // set input focus
                     });
+
+                    return _self;
                 },
 
                 createList : function() {
-                        var _self    = this,
-                            settings = _self.settings,
-                            listHTML = "";
+                    var _self    = this,
+                        settings = _self.settings,
+                        listHTML = "";
 
-                        $.each(settings.suggestions, function(index, item) {
-                                var value = "",
-                                    tag   = "";
+                    $.each(settings.suggestions, function(index, item) {
+                        var value = "",
+                            tag   = "";
 
-                                if ("object" === typeof item) {
-                                        value = item.value;
-                                        tag   = item.tag;
-                                }else {
-                                        value = item;
-                                        tag   = item;
-                                }
+                        if ("object" === typeof item) {
+                            value = item.value;
+                            tag   = item.tag;
+                        }else {
+                            value = item;
+                            tag   = item;
+                        }
 
-                                listHTML += '<li class="' + _self.classes.listItem.substr(1) + '" data-val="' + value + '">' + tag + '</li>';
-                        });
+                        listHTML += '<li class="' + _self.classes.listItem.substr(1) + '" data-val="' + value + '">' + tag + '</li>';
+                    });
 
-                        if (settings.noSuggestionMsg)
-                                listHTML += '<li class="' + _self.classes.noSuggestion.substr(1) + '">' + settings.noSuggestionMsg + '</li>';
+                    if (settings.noSuggestionMsg)
+                        listHTML += '<li class="' + _self.classes.noSuggestion.substr(1) + '">' + settings.noSuggestionMsg + '</li>';
 
-                        return listHTML;
+                    return listHTML;
                 },
 
                 addTag : function(value) {
-                        if (value) {
-                                var _self = this,
-                                    settings = _self.settings,
-                                    $input = $(_self.selectors.sTagsInput),
-                                    placeholderText = $input.attr("placeholder");
+                    if (value) {
+                        var _self = this,
+                            settings = _self.settings,
+                            $input = $(_self.selectors.sTagsInput),
+                            placeholderText = $input.attr("placeholder");
 
-                                if (placeholderText) { // remove placholder message when at least 1 tag available.
-                                  $input.data("placeholder", placeholderText)
-                                        .removeAttr("placeholder");
-                                }
-
-                                if (settings.prepareTag && ("function" === typeof settings.prepareTag))
-                                  value = settings.prepareTag(value);
-
-                                var $item = $('<span class="' + _self.classes.tagItem.substr(1) + '" data-val="' + value + '">' + _self.getTag(value) + " " +
-                                                  '<span class="' + _self.classes.removeTag.substr(1) + '"' +
-                                                      (settings.tooltipRemove ? ' title="'+settings.tooltipRemove+'"' : "") +'>' + settings.iconRemove + "</span>" +
-                                                  "</span>")
-                                              .insertBefore($input);
-
-                                if (settings.defaultTagClass)
-                                        $item.addClass(settings.defaultTagClass);
-
-                                if ((-1 !== settings.tagLimit) && (0 < settings.tagLimit) && _self.isLimitReached()) {
-                                        _self.removeItem($item, 1);
-                                        _self.flashItem(value);
-                                        return false;
-                                }
-
-                                var itemKey = _self.getItemKey(value);
-                                if (settings.whiteList && (-1 === itemKey)) {
-                                        _self.removeItem($item, 1);
-                                        _self.flashItem(value);
-                                        return false;
-                                }
-
-                                if (_self.isPresent(value)) {
-                                        _self.removeItem($item, 1);
-                                        _self.flashItem(value);
-                                }else {
-                                        _self.customStylings($item, itemKey);
-                                        var dataVal = value;
-                                        if ($.isNumeric(dataVal)) {
-                                                dataVal = (-1 === value.indexOf(".")) ? parseInt(dataVal) : parseFloat(dataVal);
-                                        }
-                                        _self.tagNames.push(dataVal);
-                                        _self.setRemoveEvent();
-                                        _self.updateInputValue();
-                                        if (settings.afterAdd && ("function" === typeof settings.afterAdd)) {
-                                                settings.afterAdd(value);
-                                        }
-                                }
-                                $(_self.selector).trigger("suggestags.add", [value]);
-                                $(_self.selector).trigger("suggestags.change");
-                                if (settings.triggerChange)
-                                        $(_self.selector).trigger("change");
-
-                                $(_self.selectors.listArea).find(_self.classes.listItem).removeClass("active");
-                                $(_self.selectors.listArea).hide();
-                                $input.removeClass(_self.classes.readyToRemove.substr(1));
-
-                                /* // disable editable if we reach limit.
-                                if (!settings.editableOnReachLimit && _self.isLimitReached()) {
-                                  setTimeout(function(e) { // for some reason disabling of the editability will trigger another addTag(). So let's delay.
-                                      $input.removeAttr("contenteditable");
-                                  }, 0);
-                                } */
+                        if (placeholderText) { // remove placholder message when at least 1 tag available.
+                            $input.data("placeholder", placeholderText)
+                                .removeAttr("placeholder");
                         }
+
+                        if ("function" === typeof settings.prepareTag)
+                            value = settings.prepareTag(value);
+
+                        var $item = $('<span class="' + _self.classes.tagItem.substr(1) + '" data-val="' + value + '">' + _self.getTag(value) + " " +
+                                            '<span class="' + _self.classes.removeTag.substr(1) + '"' +
+                                                (settings.tooltipRemove ? ' title="'+settings.tooltipRemove+'"' : "") +'>' + settings.iconRemove + "</span>" +
+                                            "</span>")
+                                        .insertBefore($input);
+
+                        if (settings.defaultTagClass)
+                                $item.addClass(settings.defaultTagClass);
+
+                        if ((-1 !== settings.tagLimit) && (0 < settings.tagLimit) && _self.isLimitReached()) {
+                            _self.removeItem($item, 1)
+                                .flashItem(value);
+                            return false;
+                        }
+
+                        var itemKey = _self.getItemKey(value);
+                        if (settings.whiteList && (-1 === itemKey)) {
+                            _self.removeItem($item, 1)
+                                .flashItem(value);
+                            return false;
+                        }
+
+                        if (_self.isPresent(value)) {
+                            _self.removeItem($item, 1)
+                                .flashItem(value);
+                        }else {
+                            _self.customStylings($item, itemKey)
+                                .tagNames.push(value);
+                            _self.setRemoveEvent()
+                                .updateInputValue();
+                            if (settings.afterAdd && ("function" === typeof settings.afterAdd)) {
+                                settings.afterAdd(value);
+                            }
+                        }
+                        $(_self.selector).trigger("suggestags.add", [value]);
+                        $(_self.selector).trigger("suggestags.change");
+                        if (settings.triggerChange)
+                            $(_self.selector).trigger("change");
+
+                        $(_self.selectors.listArea).find(_self.classes.listItem).removeClass("active");
+                        $(_self.selectors.listArea).hide();
+                        $input.removeClass(_self.classes.readyToRemove.substr(1));
+
+                        /* // disable editable if we reach limit.
+                        if (!settings.editableOnReachLimit && _self.isLimitReached()) {
+                            setTimeout(function(e) { // for some reason disabling of the editability will trigger another addTag(). So let's delay.
+                                $input.removeAttr("contenteditable");
+                            }, 0);
+                        } */
+                    }
                 },
 
                 removeTag: function(tagTitle, animate) { // boolean FALSE removes all tags.
@@ -832,15 +846,15 @@
                             };
 
                         if (_self.tagNames.length) {
-                          if (tagTitle) { // remove single item by name
-                            _self.removeTagByItem(findTagItem, animate);
+                            if (tagTitle) { // remove single item by name
+                                _self.removeTagByItem(findTagItem, animate);
 
-                          }else { // remove all items
-                            $.each(_self.tagNames, function(index, item) {
-                               _self.removeItem(findTagItem(item), animate);
-                            });
-                            _self.tagNames = []; // clear array completely
-                          }
+                            }else { // remove all items
+                                $.each(_self.tagNames, function(index, item) {
+                                   _self.removeItem(findTagItem(item), animate);
+                                });
+                                _self.tagNames = []; // clear array completely
+                            }
                         }
                         _self.updateInputValue();
                 },
@@ -851,124 +865,129 @@
                             $input = $(_self.selectors.sTagsInput);
 
                         _self.tagNames.splice($(item).index(), 1);
-                        _self.removeItem(item, animate);
-                        _self.updateInputValue();
+                        _self.removeItem(item, animate)
+                            .updateInputValue();
 
                         $(_self.selector).trigger("suggestags.remove", [$(item).attr("data-val")])
                                          .trigger("suggestags.change");
 
                         if (settings.triggerChange)
-                                $(_self.selector).trigger("change");
+                            $(_self.selector).trigger("change");
 
-                        if (("function" === settings.afterRemove) && typeof settings.afterRemove)
-                                settings.afterRemove($(item).attr("data-val"));
+                        if ("function" === typeof settings.afterRemove)
+                            settings.afterRemove($(item).attr("data-val"));
 
                         $input.removeClass(_self.classes.readyToRemove.substr(1));
 
                         if (!_self.tagNames.length) {
-                          var placeholderText = $input.data("placeholder");
-                          if (placeholderText) // return back placeholder message
-                            $input.attr("placeholder", placeholderText);
+                            var placeholderText = $input.data("placeholder");
+                            if (placeholderText) // return back placeholder message
+                                $input.attr("placeholder", placeholderText);
                             /*
-                            if (!settings.editableOnReachLimit && _self.isLimitReached())
-                              $input.attr("contenteditable", "plaintext-only");
+                                if (!settings.editableOnReachLimit && _self.isLimitReached())
+                                $input.attr("contenteditable", "plaintext-only");
                              */
                         }
                 },
 
                 removeItem : function(item, animate) { // TODO: respect reduced animation.
-                        item = $(item);
-                        if (item.length) {
-                          if (animate) {
-                                $(item).addClass("disabled");
+                    item = $(item);
+                    if (item.length) {
+                        if (animate) {
+                            $(item).addClass("disabled");
 
+                            setTimeout(function() {
+                                $(item).fadeOut(); // originally .slideUp(), but I don't want jumps.
                                 setTimeout(function() {
-                                        $(item).slideUp();
-                                        setTimeout(function() {
-                                                $(item).remove();
-                                        }, 500);
+                                    $(item).remove();
                                 }, 500);
-                          }else {
-                                $(item).remove();
-                          }
+                            }, 200);
+                        }else {
+                            $(item).remove();
                         }
+                    }
+
+                    return this;
                 },
 
                 flashItem : function(value) {
-                        var $item = false;
+                    var $item = false;
 
-                        value = value.toLowerCase();
+                    value = value.toLowerCase();
 
-                        $(this.selectors.sTagsArea).find(this.classes.tagItem).each(function() {
-                                var tagName = $(this).attr("data-val").trim();
-                                if (value === tagName.toLowerCase()) {
-                                        $item = $(this);
-                                        return false; // break each()
-                                }
-                        });
-
-                        if ($item) {
-                                $item.addClass("flash");
-                                setTimeout(function() {
-                                        $item.removeClass("flash");
-                                }, 1500);
+                    $(this.selectors.sTagsArea).find(this.classes.tagItem).each(function() {
+                        var tagName = $(this).attr("data-val").trim();
+                        if (value === tagName.toLowerCase()) {
+                            $item = $(this);
+                            return false; // break each()
                         }
+                    });
+
+                    if ($item) { // See also "flashItem()" from utilmind's commons. Basically it's the same.
+                        $item.addClass("flash");
+                        setTimeout(function() {
+                            $item.removeClass("flash");
+                        }, 1500); // it's not animation duration, it's when "flash" class being removed. Duration of effect controlled by CSS.
+                    }
+                    
+                    return this;
                 },
 
                 getItemKey : function(value) {
-                        var itemKey = -1;
+                    var itemKey = -1;
 
-                        if (this.settings.suggestions.length) {
-                                var lower = value.toLowerCase();
+                    if (this.settings.suggestions.length) {
+                            var lower = value.toLowerCase();
 
-                                $.each(this.settings.suggestions, function(key, item) {
-                                        if ("object" === typeof item) {
-                                                if (item.value.toLowerCase() === lower) {
-                                                        itemKey = key;
-                                                        return false; // break each()
-                                                }
-                                        }else if (item.toLowerCase() === lower) {
-                                                itemKey = key;
-                                                return false; // break each()
-                                        }
-                                });
-                        }
-                        return itemKey;
+                            $.each(this.settings.suggestions, function(key, item) {
+                                    if ("object" === typeof item) {
+                                            if (item.value.toLowerCase() === lower) {
+                                                    itemKey = key;
+                                                    return false; // break each()
+                                            }
+                                    }else if (item.toLowerCase() === lower) {
+                                            itemKey = key;
+                                            return false; // break each()
+                                    }
+                            });
+                    }
+                    return itemKey;
                 },
 
                 isPresent : function(value) {
-                        var present = 0;
+                    var present = 0;
 
-                        $.each(this.tagNames, function(index, tag) {
-                                if (value.toLowerCase() === tag.toLowerCase()) {
-                                        present = 1;
-                                        return false; // break each()
-                                }
-                        });
-                        return present;
+                    $.each(this.tagNames, function(index, tag) {
+                        if (value.toLowerCase() === tag.toLowerCase()) {
+                            present = 1;
+                            return false; // break each()
+                        }
+                    });
+                    return present;
                 },
 
                 customStylings : function(item, key) {
-                        var _self = this,
-                            settings = _self.settings,
-                            $item = $(item),
-                            isCustom = false;
+                    var _self = this,
+                        settings = _self.settings,
+                        $item = $(item),
+                        isCustom = false;
 
-                        if (settings.classes[key]) {
-                            isCustom = true;
-                            $item.addClass(settings.classes[key]);
-                        }
-                        if (settings.backgrounds[key]) {
-                            isCustom = true;
-                            $item.css("background", settings.backgrounds[key]);
-                        }
-                        if (settings.colors[key]) {
-                            isCustom = true;
-                            $item.css("color", settings.colors[key]);
-                        }
-                        if (!isCustom) {
-                            $item.addClass(_self.classes.colBg.substr(1));
-                        }
+                    if (settings.classes[key]) {
+                        isCustom = true;
+                        $item.addClass(settings.classes[key]);
+                    }
+                    if (settings.backgrounds[key]) {
+                        isCustom = true;
+                        $item.css("background", settings.backgrounds[key]);
+                    }
+                    if (settings.colors[key]) {
+                        isCustom = true;
+                        $item.css("color", settings.colors[key]);
+                    }
+                    if (!isCustom) {
+                        $item.addClass(_self.classes.colBg.substr(1));
+                    }
+                    return _self;
                 },
 
                 updateInputValue: function() {

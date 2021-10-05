@@ -21,12 +21,12 @@
 <script defer src="./js/jq.suggestags/suggestags.js"></script>
 </head>
 
-<body>
+<body class="zf8">
     <div id="content" class="container mt-5">
 
         <h4><b>Goal:</b> prepare perfect input field for the tags/keywords.</h4>
 <form>
-        <div class="mt-4 mb-5">
+        <div class="mt-4 mb-5" style="max-width: 150px">
             <div><label for="input-keywords">Enter keywords, comma or semicolon-separated</label></div>
             <div><input type="text" name="keywords" id="input-keywords" class="form-control place-bi"
                 placeholder="keywords, comma-separated" spellcheck="true" required autofocus /></div>
@@ -53,7 +53,7 @@
 
 <script>
 // <![CDATA[
-var wReady=function(e,n){var t=document.readyState;n||"loading"!==t?"complete"!==t?window.addEventListener("load",function(){e(3)}):"number"===typeof document.uLateLoad?document.addEventListener("uLateLoad",function n(){document.removeEventListener("uLateLoad",n),e(3)}):e(3):document.addEventListener("DOMContentLoaded",function(){e(2)&&wReady(e)})},doInit=function(f,w){(w>1||(w&&"loading"===document.readyState)||f(1))&&wReady(f,w>1)}
+!function(n,e){e.wReady=function(t,d){var a=n.readyState;d||"loading"!==a?"complete"!==a?e.addEventListener("load",function(){t(3)}):n.uLateLoad?n.addEventListener("uLateLoad",function(){t(3)}):t(3):n.addEventListener("DOMContentLoaded",function(){t(2)&&wReady(t)})},e.doInit=function(e,t){(1<t||t&&"loading"===n.readyState||e(1))&&wReady(e,1<t)}}(document,window);
 
 doInit(function() {
     if (!window.$) return 1;
@@ -62,7 +62,7 @@ doInit(function() {
 
     // suggestags-based auto-completion
     $input.umSuggestags({
-        tagLimit: 3,
+        tagLimit: 33,
         // this is totally random order. I just put world most popular languages.
         suggestions: langLanguages,
         prepareTag: function(value) {

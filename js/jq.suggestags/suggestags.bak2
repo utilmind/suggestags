@@ -188,7 +188,7 @@ li.umsg-item-pad.active {
 .umsg-suggestags-input-area
 .umsg-select-tag {
         cursor: default;
-        padding: 5px 7px;
+        padding: 2px 7px;
         margin: 1px 4px 2px 0; /* +2 for multiline tags. But make inputArea 2px less in JS */
         -webkit-border-radius: 5px; /* originally 2px */
         -moz-border-radius: 5px;
@@ -200,7 +200,6 @@ li.umsg-item-pad.active {
 .umsg-select-tag.umsg-col-bg {
         background: #d8d8d8;
         color: black;
-	line-height: 1;
 }
 
 /*.umsg-suggestags-input-area
@@ -213,32 +212,16 @@ li.umsg-item-pad.active {
 .disabled.umsg-select-tag {
         background: #eaeaea;
         color: #b9b9b9;
-	line-height: 1;
         pointer-events: none;
-}
-
-/* flash color (to draw user attention to some added/changed element). Playground: https://jsfiddle.net/utilmind/fc8j01yu/ */
-@-webkit-keyframes flash-umsg {
-    30% { background-color: #f57f7f; }
-}
-@keyframes flash-umsg {
-    30% { background-color: #f57f7f; }
 }
 
 .umsg-suggestags-input-area
 .flash.umsg-select-tag {
-	-webkit-animation: flash-umsg 1s 1 linear;
-	animation: flash-umsg 1s 1 linear;
+        background-color: #f57f7f;
+        -webkit-transition: background-color 200ms linear;
+        -ms-transition: background-color 200ms linear;
+        transition: background-color 200ms linear;
 }
-
-@media (prefers-reduced-motion: reduce) {
-	.umsg-suggestags-input-area
-	.flash.umsg-select-tag {
-        	-webkit-animation: flash-umsg .3s 1 linear;
-		animation: flash-umsg .3s 1 linear;
-        }
-}
-
 
 .umsg-suggestags-input-area
 .umsg-remove-tag {
