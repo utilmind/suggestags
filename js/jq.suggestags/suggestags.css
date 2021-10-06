@@ -45,15 +45,17 @@
 }
 
 /* Bootstrap4 style */
+.form-input-custom + .umsg-suggestags-area, /* bs3 */
 .form-control + .umsg-suggestags-area {
         /* discard styles for unstyled control */
 	outline: none;
 	border-radius: 0;
 }
 
+/*.form-input-custom + .umsg-suggestags-area:focus-within, not exiss in bs3 */
 .form-control + .umsg-suggestags-area:focus-within { /* style outer div on focus of the editable div. This is copy from regular Bootstrap v4.
-                                          Warning! "overflow: hidden" on wrapper element may destroy box-shadow effect.
-                                        */
+                                                        Warning! "overflow: hidden" on wrapper element may destroy box-shadow effect.
+                                                      */
         border-radius: 0.25rem;
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
@@ -88,14 +90,14 @@
         outline: 0;
 }
 
-.umsg-focus {
+.form-control.umsg-focus {
         border-color: #66afe9;
         outline: 0;
         -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
         box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
 }
 
-.umsg-focus-light {
+.form-control.umsg-focus-light {
         border-color: #cacaca;
         outline: 0;
         -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(189, 189, 189, 0.6);

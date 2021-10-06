@@ -284,8 +284,9 @@
                             $input.addClass($input.hasClass(classes.waitToRemove) ? classes.readyToRemove : classes.waitToRemove);
 
                         }else if (_self.isLimitReached() && // when limit reached we shouldn't allow to type anything, although control is focusable.
+                                ((32 === key) ||
                                 ((48 < key) && // 48 is "0". All other keys before 0 is control keys (like backspace, enter, tab, escape etc), so the are OK.
-                                    !((112 <= key) && (123 >= key)))) { // ! F1..F12
+                                    !((112 <= key) && (123 >= key))))) { // ! F1..F12
                             e.preventDefault();
                         }else
                             $input.removeClass(classes.waitToRemove).removeClass(classes.readyToRemove)
@@ -943,7 +944,7 @@
                             $item.removeClass("flash");
                         }, 1500); // it's not animation duration, it's when "flash" class being removed. Duration of effect controlled by CSS.
                     }
-                    
+
                     return this;
                 },
 
