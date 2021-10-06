@@ -1,3 +1,13 @@
+/* DEBUG, not used.
+.wt-rmv {
+	outline: 2px solid lime !important;
+}
+
+.to-rmv {
+	outline: 2px solid red !important;
+}
+*/
+
 .umsg-suggestags-input[placeholder]:empty:before {
         content: attr(placeholder);
         white-space: nowrap;
@@ -21,12 +31,27 @@
 	position: relative; /* avoid placeholder overflow */
 }
 
+/* Attempt to reproduce standard style of input control in Chrome browser, 2021. */
 .umsg-suggestags-area {
         width: 100%; /* AK: I just want it. Use wrapper container if you don't need 100% width. */
         overflow-x: hidden; /* keep it inside of the dialog boxes */
+
+	outline: 1px solid #4f4f4f;
+	border-radius: 3px;
 }
 
-.umsg-suggestags-area:focus-within { /* style outer div on focus of the editable div. This is copy from regular Bootstrap v4.
+.umsg-suggestags-area:focus-within {
+	outline-width: 2px;
+}
+
+/* Bootstrap4 style */
+.form-control + .umsg-suggestags-area {
+        /* discard styles for unstyled control */
+	outline: none;
+	border-radius: 0;
+}
+
+.form-control + .umsg-suggestags-area:focus-within { /* style outer div on focus of the editable div. This is copy from regular Bootstrap v4.
                                           Warning! "overflow: hidden" on wrapper element may destroy box-shadow effect.
                                         */
         border-radius: 0.25rem;
@@ -35,13 +60,7 @@
 
 .umsg-suggestags-area
 .umsg-suggestags-input-area {
-/*
-        cursor: pointer;
-        border: 1px solid #ccc;
- */
-/*        min-height: 20px;*/
-        padding: 3px 5px !important; /* bottom padding 2px less, to compensate bottom margin of ".umsg-select-tag".
-                                        UPD 4.10.2021: was "5px 5px 3px". Changed to 4px 5px 2px to avoid jumps when tag entered. */
+        padding: 3px 5px; /* fixme! Please override if something will not work as expected! */
 
         text-align: left;
         height: auto;
@@ -53,10 +72,12 @@
         cursor: text;
 }
 
+/* this is input line for new tags, that will be appended */
 .umsg-suggestags-area
 .umsg-suggestags-input-area
 .umsg-suggestags-input {
-        padding: 3px 4px; /* AK: originally "0 4px", but we need vertical padding equal to the padding for the block for entered tag. */
+        padding: 3px 4px; /* fixme! Please override if something will not work as expected! */
+                          /* AK: originally "0 4px", but we need vertical padding equal to the padding for the block for entered tag. */
         border: 0;
         display: inline-block; /* AK: required for <div>-based input */
 }
@@ -84,7 +105,6 @@
 .umsg-suggestags-area
 .umsg-suggestags-label {
         cursor: pointer;
-/*        min-height: 20px;*/
 }
 
 .umsg-toggle-suggestags {
@@ -121,7 +141,7 @@ li.umsg-list-item {
         padding: 0 10px;
 }
 
-.umsg-suggestags-area
+.form-control + .umsg-suggestags-area
 .umsg-suggestags-list
 ul.umsg-list
 li.umsg-list-item:active {
@@ -185,6 +205,7 @@ li.umsg-item-pad.active {
 }
  */
 
+/* written tag */
 .umsg-suggestags-input-area
 .umsg-select-tag {
         cursor: default;

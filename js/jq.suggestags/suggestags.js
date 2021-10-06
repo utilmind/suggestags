@@ -65,8 +65,11 @@
                         tagItem       : ".umsg-select-tag",
                         colBg         : ".umsg-col-bg",
                         removeTag     : ".umsg-remove-tag",
-                        readyToRemove : ".umsg-ready-to-remove",
                         noSuggestion  : ".umsg-no-suggestion",
+
+                        // temporary marks, w/o first dot
+                        waitToRemove  : "wt-rmv",
+                        readyToRemove : "to-rmv",
                 };
                 _self.selectors     = {
                         sTagsArea     : null,
@@ -231,6 +234,7 @@
                     var _self = this,
                         settings = _self.settings,
                         selectors = _self.selectors,
+                        classes = _self.classes,
                         $suggestList = $(selectors.listArea),
                         $input = $(selectors.sTagsInput),
 
@@ -256,13 +260,13 @@
                         if (settings.showAllSuggestions)
                             _self.suggestWhiteList("", 0, 1);
 
-                        $inputParent.closest(_self.classes.inputArea).addClass(_self.classes.focus.substr(1));
+                        $inputParent.closest(classes.inputArea).addClass(classes.focus.substr(1));
                     })
 
                     .on("blur", function() {
                         var $input = $(this); // we already have $input above, but this is for sure that we're in correct instance
 
-                        $input.closest(_self.classes.inputArea).removeClass(_self.classes.focus.substr(1));
+                        $input.closest(classes.inputArea).removeClass(classes.focus.substr(1));
 
                         if ($input.text()) { // AK: originally used .val() for input field instead of .text().
                             if (settings.addTagOnBlur)
@@ -273,72 +277,78 @@
                     })
 
                     .on("keydown", function(e) {
-                        var key = e.keyCode;
+                        var $input = $(this),
+                            key = e.keyCode;
 
-                        // when limit reached we shouldn't allow to type anything, although control is focusable.
-                        if (_self.isLimitReached() &&
-                            ((48 < key) && // 48 is "0". All other keys before 0 is control keys (like backspace, enter, tab, escape etc), so the are OK.
-                                !((112 <= key) && (123 >= key)))) { // ! F1..F12
-                                e.preventDefault();
-                        }
+                        if (8 === key && !$input.text()) {
+                            $input.addClass($input.hasClass(classes.waitToRemove) ? classes.readyToRemove : classes.waitToRemove);
+
+                        }else if (_self.isLimitReached() && // when limit reached we shouldn't allow to type anything, although control is focusable.
+                                ((48 < key) && // 48 is "0". All other keys before 0 is control keys (like backspace, enter, tab, escape etc), so the are OK.
+                                    !((112 <= key) && (123 >= key)))) { // ! F1..F12
+                            e.preventDefault();
+                        }else
+                            $input.removeClass(classes.waitToRemove).removeClass(classes.readyToRemove)
                     })
 
                     .on("keyup", function(e) {
-                            var $input = $(this), // we already have $input above, but this is for sure that we're in correct instance
-                                inputText = $input.text(),
-                                key = e.key;
+                        var $input = $(this), // we already have $input above, but this is for sure that we're in correct instance
+                            inputText = $input.text(),
+                            keyName = e.key,
+                            key = e.keyCode;
 
-                            if (key) {
-                                // AK 14.06.2020: I don't trust to e.key anymore. Sometimes (and totally randomly) it don't recognize non-latin keyboard layout and shows ".", when user typed ",".
-                                // UPD. It trigging keyup twice on cyrrillic layout. 1st key is Shift, 2nd is ".". But shift+"." is "," on cyrillic layout!
-                                // UPD. It's so easy to reproduce. Press shift, immediately unhold it and type ".". Again, Shift, then "." lightning quickly, without holding Shift.
-                                // So let's check last character to know it for sure.
-                                if (("Shift" === key) && ("," === inputText.substr(-1)))
-                                    key = ",";
+                        if (keyName) {
+                            // AK 14.06.2020: I don't trust to e.key anymore. Sometimes (and totally randomly) it don't recognize non-latin keyboard layout and shows ".", when user typed ",".
+                            // UPD. It trigging keyup twice on cyrrillic layout. 1st key is Shift, 2nd is ".". But shift+"." is "," on cyrillic layout!
+                            // UPD. It's so easy to reproduce. Press shift, immediately unhold it and type ".". Again, Shift, then "." lightning quickly, without holding Shift.
+                            // So let's check last character to know it for sure.
+                            if (("Shift" === keyName) && ("," === inputText.substr(-1)))
+                                keyName = ",";
 
-                            }else if (13 === e.keyCode)
-                                key = "Enter";
-                            else if (27 === e.keyCode)
-                                key = "Escape";
-                            else if (188 === e.keyCode)
-                                key = ",";
+                        }else if (13 === key)
+                            keyName = "Enter";
+                        else if (27 === key)
+                            keyName = "Escape";
+                        else if (188 === key)
+                            keyName = ",";
 
-                            if ("Escape" === key) {
-                                    $suggestList.hide(); // hide the list of suggestions
-                                    if (settings.clearOnEsc) $input.text("");
-                                    return;
+                        if ("Escape" === keyName) {
+                            $suggestList.hide(); // hide the list of suggestions
+                            if (settings.clearOnEsc) $input.text("");
+                            return;
+                        }
+
+                        var isDelimiter = -1 !== $.inArray(keyName, settings.delimiters),
+                            isEnter = keyName === "Enter";
+
+                        if (isDelimiter || isEnter) {
+                            if (isEnter && ("" === inputText)) { // if no text
+                                $input.closest("form").submit(); // act like a normal <input> box. Submit on enter.
+
+                            }else {
+                                appendTag(_self, $input, isDelimiter);
                             }
 
-                            var isDelimiter = -1 !== $.inArray(key, settings.delimiters),
-                                isEnter = key === "Enter";
+                        }else { // character OR backspace
 
-                            if (isDelimiter || isEnter) {
-                                    if (isEnter && ("" === inputText)) {
-                                            $input.closest("form").submit(); // act like a normal <input> box. Submit on enter.
+                            if (8 === key && !inputText) { // AK: originally used .val() for input field instead of .text().
 
-                                    }else {
-                                            appendTag(_self, $input, isDelimiter);
-                                    }
+                                if (_self.isLimitReached() || $input.hasClass(classes.readyToRemove)) {
+                                    _self.removeTagByItem($input.closest(classes.inputArea).find(classes.tagItem + ":last"), false);
+                                }
 
-                            }else if (8 === e.keyCode && !$input.text()) { // AK: originally used .val() for input field instead of .text().
-                                    var removeClass = _self.classes.readyToRemove.substr(1);
-                                    if (_self.isLimitReached() || $input.hasClass(removeClass)) {
-                                            _self.removeTagByItem($input.closest(_self.classes.inputArea).find(_self.classes.tagItem + ":last"), false);
-                                    }else {
-                                            $input.addClass(removeClass); // so next time last item will be removed on backspace.
-                                    }
-                                    $suggestList.hide();
-                                    if (settings.showAllSuggestions) {
-                                            _self.suggestWhiteList("", 0, 1);
-                                    }
-                            }else if ((settings.suggestions.length || _self.isSuggestAction()) && ($input.text() || settings.showAllSuggestions)) { // AK: originally used .val() for input field instead of .text().
-                                    $input.removeClass(_self.classes.readyToRemove.substr(1));
-                                    _self.processWhiteList(e.keyCode, $input.text()); // AK: originally used .val() for input field instead of .text().
+                                $suggestList.hide();
+                                if (settings.showAllSuggestions) {
+                                    _self.suggestWhiteList("", 0, 1);
+                                }
+                            }else if ((settings.suggestions.length || _self.isSuggestAction()) && (inputText || settings.showAllSuggestions)) { // AK: originally used .val() for input field instead of .text().
+                                _self.processWhiteList(key, $input.text()); // AK: originally used .val() for input field instead of .text().
                             }
+                        }
                     })
 
                     .on("keypress", function(e) {
-                        if (13 === e.keyCode) return false;
+                        if (13 === e.keyCode) return false; // prevent premature submission
                     });
 
                     $(selectors.sTagsArea).on("click", function() {
@@ -352,12 +362,13 @@
                 setSuggestionsEvents : function() {
                         var _self = this,
                             settings = _self.settings,
-                            selectors = _self.selectors;
+                            selectors = _self.selectors,
+                            classes = _self.classes;
 
                         // AK: Of course we always hightlight the item under mouse, but don't always want to replace input text with items content.
                         //if (settings.selectOnHover) {
-                                $(selectors.listArea).find(_self.classes.listItem).hover(function() { // hover in
-                                        $(selectors.listArea).find(_self.classes.listItem).removeClass("active");
+                                $(selectors.listArea).find(classes.listItem).hover(function() { // hover in
+                                        $(selectors.listArea).find(classes.listItem).removeClass("active");
                                         $(this).addClass("active");
                                         if (settings.selectOnHover) {
                                                 _self.setInputText($(this).text());
@@ -370,7 +381,7 @@
                                 });
                         //}
 
-                        $(selectors.listArea).find(_self.classes.listItem).mousedown(function(e) {
+                        $(selectors.listArea).find(classes.listItem).mousedown(function(e) {
                                 e.preventDefault(); // block stealing focus from input (and triggering blur event for input) before we process click event here.
 
                         }).on("click", function() {
@@ -567,18 +578,18 @@
 
                 upDownSuggestion : function(value, type) {
                         var _self     = this,
-                            isActive  = 0;
-                            //$input = $(_self.selectors.sTagsInput);
+                            isActive  = 0,
+                            classes   = _self.classes;
 
-                        $(_self.selectors.listArea).find(_self.classes.listItem + ":visible").each(function() {
+                        $(_self.selectors.listArea).find(classes.listItem + ":visible").each(function() {
                                 var $item = $(this);
                                 if ($item.hasClass("active")) {
                                         $item.removeClass("active");
 
                                         // replace $item
                                         $item = ("up" === type) ?
-                                                        $item.prevAll(_self.classes.listItem + ":visible:first") :
-                                                        $item.nextAll(_self.classes.listItem + ":visible:first");
+                                                        $item.prevAll(classes.listItem + ":visible:first") :
+                                                        $item.nextAll(classes.listItem + ":visible:first");
 
                                         if ($item.length) {
                                                 isActive = 1;
@@ -591,7 +602,7 @@
 
                         if (!isActive) {
                                 var childItem = ("down" === type) ? "first" : "last",
-                                    $item = $(_self.selectors.listArea).find(_self.classes.listItem + ":visible:" + childItem);
+                                    $item = $(_self.selectors.listArea).find(classes.listItem + ":visible:" + childItem);
 
                                 if ($item.length) {
                                   $item.addClass("active");
@@ -621,112 +632,115 @@
                 },
 
                 suggestWhiteList : function(value, keycode, showAll) {
-                        var _self = this,
-                            settings = _self.settings,
-                            found = 0,
-                            lower = value.toLowerCase(),
-                            $listArea = $(_self.selectors.listArea),
-                            $tagsArea = $(_self.selectors.sTagsArea);
+                    var _self = this,
+                        settings = _self.settings,
+                        selectors = _self.selectors,
+                        classes = _self.classes,
+                        found,
+                        lower = value.toLowerCase(),
+                        $listArea = $(selectors.listArea),
+                        $tagsArea = $(selectors.sTagsArea);
 
-                        $listArea.find(_self.classes.noSuggestion).hide();
+                    $listArea.find(classes.noSuggestion).hide();
 
-                        var $list = $listArea.find(this.classes.list);
-                        $list.find(_self.classes.listItem).each(function() {
-                            var $item = $(this),
-                                dataVal = $item.data("val");
+                    var $list = $listArea.find(this.classes.list);
+                    $list.find(classes.listItem).each(function() {
+                        var $item = $(this),
+                            dataVal = $item.data("val");
 
-                            if ((!!showAll || ~$item.text().toLowerCase().indexOf(lower)) && (-1 === $.inArray(dataVal, _self.tagNames))) {
-                                $item.attr("data-show", 1);
-                                found = 1;
-                            }else {
-                                $item.removeAttr("data-show");
-                            }
-                            $item.hide();
-                        });
-
-                        if (found) {
-                                /**
-                                 * Sorting the suggestions
-                                 */
-                                var $dataShow = $list.find(this.classes.listItem + "[data-show]");
-
-                                $dataShow.sort(function(a, b) {
-                                        a = $(a).text();
-                                        b = $(b).text();
-
-                                        var lowerVal = value.toLowerCase(),
-                                            vLen = value.length,
-                                            startA = (a.substr(0, vLen).toLowerCase() === lowerVal),
-                                            startB = (b.substr(0, vLen).toLowerCase() === lowerVal);
-
-                                        if (startA) {
-                                            if (!startB)
-                                                return -1;
-                                        }else if (startB)
-                                            return 1;
-
-                                        return a.localeCompare(b);
-                                }).appendTo($list);
-
-                                if (settings.highlightSuggestion) {
-                                    $list.find(_self.classes.listItem).each(function() {
-                                        var $el = $(this),
-
-                                            // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
-                                            escapeRegExp = function(str) {
-                                                return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-                                            };
-
-                                        $el.html($el.text().replace(new RegExp("("+escapeRegExp(value)+")", "gi"), "<b>$1</b>"));
-                                    });
-                                }
-
-                                $dataShow.each(function() {
-                                    $(this).show();
-                                });
-
-                                /**
-                                * If only one item left in whitelist suggestions
-                                */
-                                var $item = $listArea.find(_self.classes.listItem + ":visible"),
-
-                                    isSimilarText = function(_instance, str1, str2, perc) {
-                                        return _instance.settings.checkSimilar ? !!(_instance.similarity(str1, str2) * 100 >= perc) : false;
-                                    };
-
-                                if ((1 === $item.length) && (8 !== keycode)) {
-                                        if (settings.selectSimilar &&
-                                            ((settings.whiteList && isSimilarText(_self, value.toLowerCase(), $item.text().toLowerCase(), 40)) ||
-                                             isSimilarText(_self, value.toLowerCase(), $item.text().toLowerCase(), 60))) {
-                                                // this will highlight similar text, but not yet choose it.
-                                                $item.addClass("active");
-                                                // now let's replace typed text with similar. (AK: it's wrong, but this is as it was in original code, even without selectSimilar settings, added my me)
-                                                _self.setInputText($item.text());
-                                        }
-                                }else {
-                                        $item.removeClass("active");
-                                }
-
-                                // Calculate optimal position & width for dropdown box with suggestions
-                                var $inputArea = $(_self.selectors.inputArea),
-                                    inputAreaLeft = $inputArea.position().left,
-                                    leftPos = $(_self.selectors.sTagsInput).position().left;// - inputAreaLeft;
-                                $listArea.css({ // TODO: research, whether jQuery's css() are safe for Content-Security-Policy. If no -- set up style directly as described on https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src
-                                    left: inputAreaLeft + leftPos,
-                                    width: $inputArea.width() - leftPos + 3,
-                                });
-                                $listArea.show();
-
+                        if ((!!showAll || ~$item.text().toLowerCase().indexOf(lower)) && (-1 === $.inArray(dataVal, _self.tagNames))) {
+                            $item.attr("data-show", 1);
+                            found = 1;
                         }else {
-                                if (value && settings.noSuggestionMsg) {
-                                        $listArea.find(_self.classes.listItem).hide();
-                                        $listArea.find(_self.classes.noSuggestion).show();
-                                }else {
-                                        $listArea.hide();
-                                }
+                            $item.removeAttr("data-show");
+                        }
+                        $item.hide();
+                    });
+
+                    if (found) {
+                        /**
+                         * Sorting the suggestions
+                         */
+                        var $dataShow = $list.find(classes.listItem + "[data-show]");
+
+                        $dataShow.sort(function(a, b) {
+                                    a = $(a).text();
+                                    b = $(b).text();
+
+                                    var lowerVal = value.toLowerCase(),
+                                        vLen = value.length,
+                                        startA = (a.substr(0, vLen).toLowerCase() === lowerVal),
+                                        startB = (b.substr(0, vLen).toLowerCase() === lowerVal);
+
+                                    if (startA) {
+                                        if (!startB)
+                                            return -1;
+                                    }else if (startB)
+                                        return 1;
+
+                                    return a.localeCompare(b);
+                            }).appendTo($list);
+
+                        if (settings.highlightSuggestion) {
+                            $list.find(classes.listItem).each(function() {
+                                 var $el = $(this),
+
+                                     // https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+                                     escapeRegExp = function(str) {
+                                         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                                     };
+
+                                 $el.html($el.text().replace(new RegExp("("+escapeRegExp(value)+")", "gi"), "<b>$1</b>"));
+                            });
                         }
 
-                        return _self;
+                        $dataShow.each(function() {
+                            $(this).show();
+                        });
+
+                        /**
+                         * If only one item left in whitelist suggestions
+                         */
+                        var $item = $listArea.find(classes.listItem + ":visible"),
+
+                            isSimilarText = function(_instance, str1, str2, perc) {
+                                return _instance.settings.checkSimilar ? !!(_instance.similarity(str1, str2) * 100 >= perc) : false;
+                            };
+
+                        if ((1 === $item.length) && (8 !== keycode)) {
+                            if (settings.selectSimilar &&
+                               ((settings.whiteList && isSimilarText(_self, value.toLowerCase(), $item.text().toLowerCase(), 40)) ||
+                               isSimilarText(_self, value.toLowerCase(), $item.text().toLowerCase(), 60))) {
+                                    // this will highlight similar text, but not yet choose it.
+                                    $item.addClass("active");
+                                    // now let's replace typed text with similar. (AK: it's wrong, but this is as it was in original code, even without selectSimilar settings, added my me)
+                                    _self.setInputText($item.text());
+                            }
+                        }else {
+                            $item.removeClass("active");
+                        }
+
+                        // Calculate optimal position & width for dropdown box with suggestions
+                        var $inputArea = $(selectors.inputArea),
+                            inputAreaLeft = $inputArea.position().left,
+                            leftPos = $(selectors.sTagsInput).position().left;// - inputAreaLeft;
+
+                        $listArea.css({ // TODO: research, whether jQuery's css() are safe for Content-Security-Policy. If no -- set up style directly as described on https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src
+                            left: inputAreaLeft + leftPos,
+                            width: $inputArea.width() - leftPos + 3,
+                        });
+                        $listArea.show();
+
+                    }else {
+                        if (value && settings.noSuggestionMsg) {
+                            $listArea.find(classes.listItem).hide();
+                            $listArea.find(classes.noSuggestion).show();
+                        }else {
+                            $listArea.hide();
+                        }
+                    }
+
+                    return _self;
                 },
 
                 setRemoveEvent: function() {
@@ -828,7 +842,7 @@
 
                         $(_self.selectors.listArea).find(_self.classes.listItem).removeClass("active");
                         $(_self.selectors.listArea).hide();
-                        $input.removeClass(_self.classes.readyToRemove.substr(1));
+                        $input.removeClass(_self.classes.readyToRemove);
 
                         /* // disable editable if we reach limit.
                         if (!settings.editableOnReachLimit && _self.isLimitReached()) {
@@ -877,7 +891,7 @@
                         if ("function" === typeof settings.afterRemove)
                             settings.afterRemove($(item).attr("data-val"));
 
-                        $input.removeClass(_self.classes.readyToRemove.substr(1));
+                        $input.removeClass(_self.classes.readyToRemove);
 
                         if (!_self.tagNames.length) {
                             var placeholderText = $input.data("placeholder");
