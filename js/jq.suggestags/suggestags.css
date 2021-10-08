@@ -69,19 +69,20 @@
         overflow-x: hidden; /* keep placeholder inside */
 }
 
-.umsg-suggestags-area
-.umsg-suggestags-input-area:hover {
-        cursor: text;
-}
-
 /* this is input line for new tags, that will be appended */
 .umsg-suggestags-area
 .umsg-suggestags-input-area
 .umsg-suggestags-input {
-        padding: 3px 4px; /* fixme! Please override if something will not work as expected! */
+        padding: 3px 5px; /* fixme! Please override if something will not work as expected! */
+        padding-left: 5px !important; /* Important required to override horizontal padding. But let vertical padding to be overridden, if required. */
                           /* AK: originally "0 4px", but we need vertical padding equal to the padding for the block for entered tag. */
         border: 0;
         display: inline-block; /* AK: required for <div>-based input */
+}
+
+.umsg-suggestags-area
+.umsg-suggestags-input-area:hover {
+        cursor: text;
 }
 
 .umsg-suggestags-area
@@ -130,7 +131,7 @@ ul.umsg-list {
         list-style: none;
         padding: 3px 0;
         margin: 0; /* AK: bootstrap adding 1em margin to the bottom of <UL>, but we don't need it here. */
-        max-height: 150px;
+        max-height: 12.3rem; /* !!! Feel free to increase !!! 150px works great too! */
         overflow-y: auto;
 }
 
@@ -146,7 +147,7 @@ li.umsg-list-item {
 .form-control + .umsg-suggestags-area
 .umsg-suggestags-list
 ul.umsg-list
-li.umsg-list-item:active {
+li.umsg-list-item:sel {
         background: #717171;
         color: white;
         -moz-box-shadow:    inset 0 0 10px #000;
@@ -189,14 +190,14 @@ li.umsg-item-noresult {
 .umsg-suggestags-area
 .umsg-suggestags-list
 ul.umsg-list
-li.active {
+li.sel {
         background: #d9d8d8;
 }
 
 .umsg-suggestags-area
 .umsg-suggestags-list
 ul.umsg-list
-li.umsg-item-pad.active {
+li.umsg-item-pad.sel {
         font-weight: normal;
 }
 

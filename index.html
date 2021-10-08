@@ -26,10 +26,19 @@
 
         <h4><b>Goal:</b> prepare perfect input field for the tags/keywords.</h4>
         <div class="mt-4 mb-5">
-            <div><label for="input-keywords">Enter keywords, comma or semicolon-separated</label></div>
-            <div><input type="text" name="keywords" id="input-keywords" class="form-control place-bi" value="Test,hello"
+            <div><label for="input-keywords1">Enter keywords, comma or semicolon-separated.<br />
+                 3 values already preset (with limit of 4), "ucwords" for all entered items.</label></div>
+            <div><input type="text" name="keywords" id="input-keywords1" class="form-control place-bi" value="Test,hello, world"
                 placeholder="keywords, comma-separated" spellcheck="true" required autofocus /></div>
-            <div class="mt-2"><input type="text" name="temp" id="input-temp" class="form-control place-bi"
+
+            <div class="mt-2"><label for="input-keywords1">"lowercase, except the first letter" for all entered items.</label></div>
+            <div><input type="text" name="keywords" id="input-keywords2" class="form-control place-bi"
+                placeholder="keywords, comma-separated" spellcheck="true" required autofocus /></div>
+
+        </div>
+        <div class="mt-4 mb-5">
+            <label for="input-regular">Regular input field, just for comparison:</label>
+            <div><input type="text" name="temp" id="input-regular" class="form-control place-bi"
                 placeholder="keywords, comma-separated" spellcheck="true" required autofocus /></div>
         </div>
 
@@ -56,16 +65,26 @@
 doInit(function() {
     if (!window.$) return 1;
 
-    var $input = $("#input-keywords");
+    var $input1 = $("#input-keywords1"),
+        $input2 = $("#input-keywords2");
 
     // suggestags-based auto-completion
-    $input.umSuggestags({
-        tagLimit: 3,
+    $input1.umSuggestags({
+        tagLimit: 5,
         // this is totally random order. I just put world most popular languages.
         suggestions: langLanguages,
         prepareTag: function(value) {
             return value.ucwords();
-        },
+        }
+    });
+
+    $input2.umSuggestags({
+        tagLimit: 33,
+        prepareTag: function(value) {
+            return value.replace(/(?<!^|\s|\W)(\w)/g, function(m, m1) {
+                return m1.toLowerCase();
+            });
+        }
     });
 
 }, 1);

@@ -4,13 +4,21 @@
  *     http://www.amsify42.com
  *
  * Improved in 06.2020 by https://github.com/utilmind
- * ...more improvements and first release as separate umSuggestags on 10.2021
+ * ...more improvements (bugfixes, support of "paste" event, etc) as separately released umSuggestags in 10.2021
  *
  * Compatibility notes:
  *    - trim() is part of JavaScript v1.8.1: https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
  *      But you can use $.trim(...) instead.
+ *
+ * TODO:
+ *    1. Highlight item for deletion, prior to caret, when backspace pressed.
+ *    2. (maybe) Prevent default processing on presses of the arrow keys. (Move from onkeyup to onkeydown, but I'm really not sure here. Need tests.)
+ *    3. Doubleclick should switch item to edit mode. (Okay to remove and copy it to current input.)
+ *    4. Research how to scroll the list to cursor when last item selected with key arrows.
+ *    5. showAllSuggestions. It's expands immediately if field is already focused on page load.
+ *       But... I actually want to not display it on focus. I want it when I press "up", "down" or "right" arrow key when input is empty. (This is must have feature!! Should be enabled by default!)
  */
-"use strict"; // can be commented out in production release
+// "use strict"; // can be commented out in production release
 
 (function(factory) {
         if ("object" === typeof module && "object" === typeof module.exports) {
@@ -47,7 +55,7 @@
                         triggerChange     : false,
                         noSuggestionMsg   : "",
                         highlightSuggestion:true,
-                        showAllSuggestions: false,
+                        showAllSuggestions: false, // always show all suggestions
                         keepLastOnHoverTag: true,
                         checkSimilar      : true,
                         delimiters        : [",", ";"], // first delimiter used to split the incoming value. At least 1 delimiter must be used.
@@ -91,8 +99,7 @@
 
                 init : function(settings, method) {
                     var _self = this,
-                        $selfSelector = $(_self.selector), // original input control
-                        items = $selfSelector.val().split(","); // keep it before "refresh".
+                        $selfSelector = $(_self.selector); // original input control
 
                     // mergin default settings with custom
                     if (settings)
@@ -102,7 +109,7 @@
                         _self.createHTML()
                             .setEvents();
 
-                        var $tagsInput = $(_self.selectors.sTagsInput);
+                        var $tagsInput = _self.selectors.sTagsInput;
                         if ($selfSelector.is(":focus"))
                             $tagsInput.trigger("focus");
 
@@ -128,13 +135,7 @@
                             _self.removeTag(false);
                     }
 
-
-                    // convert current <input> value into tags.
-                    if (items.length) {
-                        $.each(items, function(index, item) {
-                            _self.addTag(item.trim());
-                        });
-                    }
+                    _self.addTags($selfSelector.val());
                 },
 
                 createHTML : function() {
@@ -181,8 +182,8 @@
                         $('label[for="' + selfSelectorId + '"]').on("click", function() {
                             // it won't focus immediately after click, so let's focus when this thread is about to finish
                             setTimeout(function() {
-                                $(selectors.sTagsInput).focus(); // set input focus
-                            }, 0);
+                                selectors.sTagsInput.trigger("focus"); // set input focus
+                            });
                         });
                     }
 
@@ -192,7 +193,7 @@
                 updateIsRequired : function() {
                     var attrRequired = "required",
                         _self = this,
-                        $input = $(_self.selectors.sTagsInput);
+                        $input = _self.selectors.sTagsInput;
 
                     if (_self.isRequired) {
                         if (_self.tagNames.length)
@@ -226,8 +227,8 @@
                     $inputArea.addClass($selfSelector.attr("class"));
 
                     _self.setTagEvents()
-                            .setSuggestionsEvents()
-                            .setRemoveEvent();
+                        .setSuggestionsEvents()
+                        .setRemoveEvent();
                 },
 
                 setTagEvents : function() {
@@ -235,30 +236,33 @@
                         settings = _self.settings,
                         selectors = _self.selectors,
                         classes = _self.classes,
-                        $suggestList = $(selectors.listArea),
-                        $input = $(selectors.sTagsInput),
+                        $suggestList = selectors.listArea,
+                        $input = selectors.sTagsInput,
 
-                        appendTag = function(_instance, $input, hasDelimiter) {
+                        appendTag = function(hasDelimiter) {
                             var value = $input.text().trim();
                             if (hasDelimiter) {
                                 // remove all characters used as delimiters from the appended value
-                                $.each(_instance.settings.delimiters, function(dkey, delimiter) {
+                                $.each(_self.settings.delimiters, function(dkey, delimiter) {
                                     value = value.replace(delimiter, "").trim();
                                 });
                             }
 
                             $input.text(""); // AK: originally was used .val() for input field instead of .text().
-                            _instance.addTag(_instance.getValue(value));
-                            if (_instance.settings.showAllSuggestions) {
-                                _instance.suggestWhiteList("", 0, 1);
-                            }
+                            _self.addTag(_self.getValue(value));
+                            if (_self.settings.showAllSuggestions)
+                                _self.suggestWhiteList("", 0, 1);
                         };
 
                     $input.on("focus", function() {
                         var $inputParent = $(this).parent();
 
-                        if (settings.showAllSuggestions)
-                            _self.suggestWhiteList("", 0, 1);
+                        if (settings.showAllSuggestions) {
+                            // focus may be hodden by some other control. Especially on startup. So let's wait for rendering for sure.
+                            setTimeout(function() {
+                                _self.suggestWhiteList("", 0, 1);
+                            });
+                        }
 
                         $inputParent.closest(classes.inputArea).addClass(classes.focus.substr(1));
                     })
@@ -270,7 +274,7 @@
 
                         if ($input.text()) { // AK: originally used .val() for input field instead of .text().
                             if (settings.addTagOnBlur)
-                                appendTag(_self, $input);
+                                appendTag();
                         }else {
                             $suggestList.hide();
                         }
@@ -315,7 +319,7 @@
 
                         if ("Escape" === keyName) {
                             $suggestList.hide(); // hide the list of suggestions
-                            if (settings.clearOnEsc) $input.text("");
+                            if (settings.clearOnEsc) $input.text(""); // clear
                             return;
                         }
 
@@ -327,7 +331,7 @@
                                 $input.closest("form").submit(); // act like a normal <input> box. Submit on enter.
 
                             }else {
-                                appendTag(_self, $input, isDelimiter);
+                                appendTag(isDelimiter);
                             }
 
                         }else { // character OR backspace
@@ -339,17 +343,70 @@
                                 }
 
                                 $suggestList.hide();
-                                if (settings.showAllSuggestions) {
+                                if (settings.showAllSuggestions)
                                     _self.suggestWhiteList("", 0, 1);
-                                }
+
                             }else if ((settings.suggestions.length || _self.isSuggestAction()) && (inputText || settings.showAllSuggestions)) { // AK: originally used .val() for input field instead of .text().
-                                _self.processWhiteList(key, $input.text()); // AK: originally used .val() for input field instead of .text().
+                                // redirect keypress to the white list...
+                                // TODO: move this to "keydown". To prevent cursor jumps on "key up" within the list.
+                                var sel;
+
+                                if (40 === key || 38 === key || // up or down or...
+                                   (39 === key && (sel = document.getSelection()) && inputText.length === sel.focusOffset)) { // right and the cart is at the end (selection not matter, we checking only caret, focusOffset)
+
+                                    var isDown = 38 !== key,
+                                        $selectedItem = $(_self.selectors.listArea).find(classes.listItem + ".sel:visible"),
+
+                                        setInput = function($item) {
+                                            if ($item.length) {
+                                                isSelected = 1;
+                                                _self.setInputText($item.addClass("sel").text());
+                                            }
+                                        };
+
+                                    if ($selectedItem.length) {
+                                        if (39 === key) { // right-arrow + has selection. (No selection -- let it act just like "down", select first available item.)
+                                            appendTag(_self.selectors.sTagsInput, true);
+                                        }else {
+                                            $selectedItem.each(function() {
+                                                // choose function to call. Select previous or next item
+                                                $(this).removeClass("sel");
+                                                setInput($(this)[isDown ? "nextAll" : "prevAll"](classes.listItem + ":visible:first"));
+                                            });
+                                        }
+                                    }else { // None selected. Choose either first or the last
+                                        setInput($(_self.selectors.listArea).find(classes.listItem + ":visible:" + (isDown ? "first" : "last")));
+                                    }
+
+                                }else { // refresh the list of suggestions...
+                                    if (_self.isSuggestAction() && !_self.ajaxActive) {
+                                        var minChars   = _self.settings.suggestionsAction.minChars,
+                                            minChange  = _self.settings.suggestionsAction.minChange,
+                                            lastSearch = _self.selectors.sTagsInput.data("last-search");
+
+                                        if ((inputText.length >= minChars) && (-1 === minChange || !lastSearch || _self.similarity(lastSearch, inputText) * 100 <= minChange)) {
+                                            _self.selectors.sTagsInput.data("last-search", inputText);
+                                            _self.ajaxActive = true;
+                                            _self.processAjaxSuggestion(inputText, key);
+                                        }
+                                    }else {
+                                        _self.suggestWhiteList(inputText, key);
+                                    }
+                                }
                             }
                         }
                     })
 
                     .on("keypress", function(e) {
                         if (13 === e.keyCode) return false; // prevent premature submission
+                    })
+
+                    .on("paste", function(e) {
+                        var paste = (e.originalEvent.clipboardData || window.clipboardData).getData("text"); // window.clipboardData is IE11
+                        if (paste) {
+                            e.preventDefault();
+                            _self.addTags(paste);
+                        }
                     });
 
                     $(selectors.sTagsArea).on("click", function() {
@@ -361,36 +418,31 @@
                 },
 
                 setSuggestionsEvents : function() {
-                        var _self = this,
-                            settings = _self.settings,
-                            selectors = _self.selectors,
-                            classes = _self.classes;
+                    var _self = this,
+                        settings = _self.settings,
+                        selectors = _self.selectors,
+                        classes = _self.classes;
 
-                        // AK: Of course we always hightlight the item under mouse, but don't always want to replace input text with items content.
-                        //if (settings.selectOnHover) {
-                                $(selectors.listArea).find(classes.listItem).hover(function() { // hover in
-                                        $(selectors.listArea).find(classes.listItem).removeClass("active");
-                                        $(this).addClass("active");
-                                        if (settings.selectOnHover) {
-                                                _self.setInputText($(this).text());
-                                        }
-                                }, function() { // hover out
-                                        $(this).removeClass("active");
-                                        if (settings.selectOnHover && !settings.keepLastOnHoverTag) {
-                                                $(selectors.sTagsInput).text(""); // AK: originally used .val() for input field instead of .text().
-                                        }
-                                });
-                        //}
+                    $(selectors.listArea).find(classes.listItem).on("mouseenter", function() { // hover in
+                        $(selectors.listArea).find(classes.listItem).removeClass("sel");
+                        $(this).addClass("sel");
+                        if (settings.selectOnHover)
+                            _self.setInputText($(this).text());
+                    }).on("mouseleave", function() { // hover out
+                        $(this).removeClass("sel");
+                        if (settings.selectOnHover && !settings.keepLastOnHoverTag)
+                            selectors.sTagsInput.text(""); // AK: originally used .val() for input field instead of .text().
+                    });
 
-                        $(selectors.listArea).find(classes.listItem).mousedown(function(e) {
-                                e.preventDefault(); // block stealing focus from input (and triggering blur event for input) before we process click event here.
+                    $(selectors.listArea).find(classes.listItem).on("mousedown", function(e) {
+                        e.preventDefault(); // block stealing focus from input (and triggering blur event for input) before we process click event here.
 
-                        }).on("click", function() {
-                                _self.addTag($(this).data("val"));
-                                $(selectors.sTagsInput).text("").focus(); // AK: originally used .val() for input field instead of .text().
-                        });
+                    }).on("click", function() {
+                        _self.addTag($(this).data("val"));
+                        selectors.sTagsInput.text("").trigger("focus"); // AK: originally used .val() for input field instead of .text().
+                    });
 
-                        return _self;
+                    return _self;
                 },
 
                 isLimitReached: function() {
@@ -442,36 +494,36 @@
                 },
 
                 processAjaxSuggestion : function(value, keycode) {
-                        var _self = this,
-                            settings = _self.settings,
+                    var _self = this,
+                        settings = _self.settings,
 
-                            getActionURL = function(urlString) {
-                                var URL = "",
+                        getActionURL = function(urlString) {
+                            var URL = "",
 
-                                    isAbsoluteURL = function(urlString) {
-                                        return !!(new RegExp("^(?:[a-z]+:)?//", "i")).test(urlString);
-                                    };
+                                isAbsoluteURL = function(urlString) {
+                                    return !!(new RegExp("^(?:[a-z]+:)?//", "i")).test(urlString);
+                                };
 
-                                if (window !== undefined)
-                                    URL = window.location.protocol + "//" + window.location.host;
+                            if (window !== undefined)
+                                URL = window.location.protocol + "//" + window.location.host;
 
-                                if (isAbsoluteURL(urlString))
-                                    URL = urlString;
-                                else
-                                    URL += "/" + urlString.replace(/^\/|\/$/g, "");
+                            if (isAbsoluteURL(urlString))
+                                URL = urlString;
+                            else
+                                URL += "/" + urlString.replace(/^\/|\/$/g, "");
 
-                                return URL;
+                            return URL;
+                        },
+
+                        params  = {
+                                existingTags: _self.tagNames,
+                                existing: settings.suggestions,
+                                term: value,
                             },
 
-                            params  = {
-                                    existingTags: _self.tagNames,
-                                    existing: settings.suggestions,
-                                    term: value,
-                                },
-
-                            ajaxFormParams  = {
-                                url : getActionURL(settings.suggestionsAction.url),
-                            },
+                        ajaxFormParams  = {
+                            url : getActionURL(settings.suggestionsAction.url),
+                        },
 
                             unique = function(list) {
                                 var result = [],
@@ -511,109 +563,51 @@
                             };
 
                         if ("GET" === settings.suggestionsAction.type) {
-                                ajaxFormParams.url = ajaxFormParams.url + "?" + $.param(params);
+                            ajaxFormParams.url = ajaxFormParams.url + "?" + $.param(params);
                         }else {
-                                ajaxFormParams.type = settings.suggestionsAction.type;
-                                ajaxFormParams.data = params;
+                            ajaxFormParams.type = settings.suggestionsAction.type;
+                            ajaxFormParams.data = params;
                         }
 
                         if (-1 !== settings.suggestionsAction.timeout) {
-                                ajaxFormParams["timeout"] = settings.suggestionsAction.timeout * 1000;
+                            ajaxFormParams["timeout"] = settings.suggestionsAction.timeout * 1000;
                         }
 
                         if ("function" === typeof settings.suggestionsAction.beforeSend) {
-                                ajaxFormParams["beforeSend"] = settings.suggestionsAction.beforeSend;
+                            ajaxFormParams["beforeSend"] = settings.suggestionsAction.beforeSend;
                         }
 
                         ajaxFormParams["success"] = function(data) {
-                                if (data && data.suggestions) {
-                                        settings.suggestions = $.merge(settings.suggestions, data.suggestions);
-                                        settings.suggestions = _self.unique(settings.suggestions);
-                                        _self.updateSuggestionList()
-                                             .setSuggestionsEvents()
-                                             .suggestWhiteList(value, keycode);
-                                }
+                            if (data && data.suggestions) {
+                                settings.suggestions = $.merge(settings.suggestions, data.suggestions);
+                                settings.suggestions = _self.unique(settings.suggestions);
+                                _self.updateSuggestionList()
+                                     .setSuggestionsEvents()
+                                     .suggestWhiteList(value, keycode);
+                            }
 
-                                if ("function" === typeof settings.suggestionsAction.success) {
-                                        settings.suggestionsAction.success(data);
-                                }
+                            if ("function" === typeof settings.suggestionsAction.success) {
+                                settings.suggestionsAction.success(data);
+                            }
                         };
 
                         if ("function" === typeof settings.suggestionsAction.error) {
-                                ajaxFormParams["error"] = settings.suggestionsAction.error;
+                            ajaxFormParams["error"] = settings.suggestionsAction.error;
                         }
 
                         ajaxFormParams["complete"] = function(data) {
-                                if ("function" === typeof settings.suggestionsAction.complete) {
-                                        settings.suggestionsAction.complete(data);
-                                }
+                            if ("function" === typeof settings.suggestionsAction.complete) {
+                                settings.suggestionsAction.complete(data);
+                            }
 
-                                _self.ajaxActive = false;
+                            _self.ajaxActive = false;
                         };
 
                         $.ajax(ajaxFormParams);
                 },
 
-                processWhiteList : function(keycode, value) {
-                        var _self = this;
-
-                        if (40 === keycode || 38 === keycode) {
-                                var type = (40 === keycode) ? "down" : "up";
-                                _self.upDownSuggestion(value, type);
-                        }else {
-                                if (_self.isSuggestAction() && !_self.ajaxActive) {
-                                        var minChars   = _self.settings.suggestionsAction.minChars,
-                                            minChange  = _self.settings.suggestionsAction.minChange,
-                                            lastSearch = _self.selectors.sTagsInput.data("last-search");
-
-                                        if ((value.length >= minChars) && (-1 === minChange || !lastSearch || _self.similarity(lastSearch, value) * 100 <= minChange)) {
-                                                _self.selectors.sTagsInput.data("last-search", value);
-                                                _self.ajaxActive = true;
-                                                _self.processAjaxSuggestion(value, keycode);
-                                        }
-                                }else {
-                                        _self.suggestWhiteList(value, keycode);
-                                }
-                        }
-                },
-
-                upDownSuggestion : function(value, type) {
-                        var _self     = this,
-                            isActive  = 0,
-                            classes   = _self.classes;
-
-                        $(_self.selectors.listArea).find(classes.listItem + ":visible").each(function() {
-                                var $item = $(this);
-                                if ($item.hasClass("active")) {
-                                        $item.removeClass("active");
-
-                                        // replace $item
-                                        $item = ("up" === type) ?
-                                                        $item.prevAll(classes.listItem + ":visible:first") :
-                                                        $item.nextAll(classes.listItem + ":visible:first");
-
-                                        if ($item.length) {
-                                                isActive = 1;
-                                                $item.addClass("active");
-                                                _self.setInputText($item.text());
-                                        }
-                                        return false;
-                                }
-                        });
-
-                        if (!isActive) {
-                                var childItem = ("down" === type) ? "first" : "last",
-                                    $item = $(_self.selectors.listArea).find(classes.listItem + ":visible:" + childItem);
-
-                                if ($item.length) {
-                                  $item.addClass("active");
-                                  _self.setInputText($item.text());
-                                }
-                        }
-                },
-
                 setInputText : function(value) {
-                    var $input = $(this.selectors.sTagsInput),
+                    var $input = this.selectors.sTagsInput,
 
                         // this function moves input cursor to the end of editable <div>. For <input>'s we should use different code, see setSelectionRange().
                         cursorToEnd = function() {
@@ -704,27 +698,27 @@
                          */
                         var $item = $listArea.find(classes.listItem + ":visible"),
 
-                            isSimilarText = function(_instance, str1, str2, perc) {
-                                return _instance.settings.checkSimilar ? !!(_instance.similarity(str1, str2) * 100 >= perc) : false;
+                            isSimilarText = function(str1, str2, perc) {
+                                return _self.settings.checkSimilar ? !!(_self.similarity(str1, str2) * 100 >= perc) : false;
                             };
 
                         if ((1 === $item.length) && (8 !== keycode)) {
                             if (settings.selectSimilar &&
-                               ((settings.whiteList && isSimilarText(_self, value.toLowerCase(), $item.text().toLowerCase(), 40)) ||
-                               isSimilarText(_self, value.toLowerCase(), $item.text().toLowerCase(), 60))) {
+                               ((settings.whiteList && isSimilarText(value.toLowerCase(), $item.text().toLowerCase(), 40)) ||
+                               isSimilarText(value.toLowerCase(), $item.text().toLowerCase(), 60))) {
                                     // this will highlight similar text, but not yet choose it.
-                                    $item.addClass("active");
+                                    $item.addClass("sel");
                                     // now let's replace typed text with similar. (AK: it's wrong, but this is as it was in original code, even without selectSimilar settings, added my me)
                                     _self.setInputText($item.text());
                             }
                         }else {
-                            $item.removeClass("active");
+                            $item.removeClass("sel");
                         }
 
                         // Calculate optimal position & width for dropdown box with suggestions
-                        var $inputArea = $(selectors.inputArea),
+                        var $inputArea = selectors.inputArea,
                             inputAreaLeft = $inputArea.position().left,
-                            leftPos = $(selectors.sTagsInput).position().left;// - inputAreaLeft;
+                            leftPos = selectors.sTagsInput.position().left;// - inputAreaLeft;
 
                         $listArea.css({ // TODO: research, whether jQuery's css() are safe for Content-Security-Policy. If no -- set up style directly as described on https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src
                             left: inputAreaLeft + leftPos,
@@ -746,8 +740,8 @@
 
                 setRemoveEvent: function() {
                     var _self = this,
-                        //$input = $(_self.selectors.sTagsInput),
-                        $inputArea = $(_self.selectors.inputArea);
+                        //$input = _self.selectors.sTagsInput,
+                        $inputArea = _self.selectors.inputArea;
 
                     $inputArea.find(_self.classes.removeTag).on("click", function(e) {
                         e.stopImmediatePropagation();
@@ -755,7 +749,7 @@
                         var $tagItem = $(this).closest(_self.classes.tagItem);
                         _self.removeTagByItem($tagItem, false);
 
-                        $(_self.selectors.sTagsInput).trigger("focus"); // set input focus
+                        _self.selectors.sTagsInput.trigger("focus"); // set input focus
                     });
 
                     return _self;
@@ -791,7 +785,7 @@
                     if (value) {
                         var _self = this,
                             settings = _self.settings,
-                            $input = $(_self.selectors.sTagsInput),
+                            $input = _self.selectors.sTagsInput,
                             placeholderText = $input.attr("placeholder");
 
                         if (placeholderText) { // remove placholder message when at least 1 tag available.
@@ -841,7 +835,7 @@
                         if (settings.triggerChange)
                             $(_self.selector).trigger("change");
 
-                        $(_self.selectors.listArea).find(_self.classes.listItem).removeClass("active");
+                        $(_self.selectors.listArea).find(_self.classes.listItem).removeClass("sel");
                         $(_self.selectors.listArea).hide();
                         $input.removeClass(_self.classes.readyToRemove);
 
@@ -849,8 +843,21 @@
                         if (!settings.editableOnReachLimit && _self.isLimitReached()) {
                             setTimeout(function(e) { // for some reason disabling of the editability will trigger another addTag(). So let's delay.
                                 $input.removeAttr("contenteditable");
-                            }, 0);
+                            });
                         } */
+                    }
+                },
+
+                // bulk adding of comma-separated tags
+                addTags: function(items) {
+                    var _self = this;
+
+                    items = items.split(","); // keep it before "refresh".
+                    // convert current <input> value into tags.
+                    if (items.length) {
+                        $.each(items, function(index, item) {
+                            _self.addTag(item.trim()); // don't worry, empty items won't be added
+                        });
                     }
                 },
 
@@ -877,7 +884,7 @@
                 removeTagByItem : function(item, animate) { // item is HTML element
                         var _self = this,
                             settings = _self.settings,
-                            $input = $(_self.selectors.sTagsInput);
+                            $input = _self.selectors.sTagsInput;
 
                         _self.tagNames.splice($(item).index(), 1);
                         _self.removeItem(item, animate)
@@ -952,19 +959,19 @@
                     var itemKey = -1;
 
                     if (this.settings.suggestions.length) {
-                            var lower = value.toLowerCase();
+                        var lower = value.toLowerCase();
 
-                            $.each(this.settings.suggestions, function(key, item) {
-                                    if ("object" === typeof item) {
-                                            if (item.value.toLowerCase() === lower) {
-                                                    itemKey = key;
-                                                    return false; // break each()
-                                            }
-                                    }else if (item.toLowerCase() === lower) {
-                                            itemKey = key;
-                                            return false; // break each()
-                                    }
-                            });
+                        $.each(this.settings.suggestions, function(key, item) {
+                            if ("object" === typeof item) {
+                                if (item.value.toLowerCase() === lower) {
+                                    itemKey = key;
+                                    return false; // break each()
+                                }
+                            }else if (item.toLowerCase() === lower) {
+                                itemKey = key;
+                                return false; // break each()
+                            }
+                        });
                     }
                     return itemKey;
                 },
@@ -1006,16 +1013,16 @@
                 },
 
                 updateInputValue: function() {
-                        this.updateIsRequired();
-                        $(this.selector).val(this.tagNames.join(","));
+                    this.updateIsRequired();
+                    $(this.selector).val(this.tagNames.join(","));
                 },
 
                 refresh : function() {
-                        this._init(false, "refresh");
+                    this._init(false, "refresh");
                 },
 
                 destroy : function() {
-                        this._init(false, "destroy");
+                    this._init(false, "destroy");
                 },
 
                 similarity: function(s1, s2) {
@@ -1023,26 +1030,25 @@
                                 s1 = s1.toLowerCase();
                                 s2 = s2.toLowerCase();
 
-                                var i, costs = [];
-                                for (i = 0; i <= s1.length; ++i) {
-                                        var j, lastValue = i;
-                                        for (j = 0; j <= s2.length; ++j) {
-                                                if (0 === i) {
-                                                        costs[j] = j;
-                                                }else {
-                                                        if (0 < j) {
-                                                                var newValue = costs[j-1];
-                                                                if (s1.charAt(i-1) !== s2.charAt(j-1)) {
-                                                                        newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                                                                }
-                                                                costs[j-1] = lastValue;
-                                                                lastValue  = newValue;
-                                                        }
+                                for (var i = 0, costs = []; i <= s1.length; ++i) {
+                                    var j, lastValue = i;
+                                    for (j = 0; j <= s2.length; ++j) {
+                                        if (0 === i) {
+                                            costs[j] = j;
+                                        }else {
+                                            if (0 < j) {
+                                                var newValue = costs[j-1];
+                                                if (s1.charAt(i-1) !== s2.charAt(j-1)) {
+                                                    newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
                                                 }
+                                                costs[j-1] = lastValue;
+                                                lastValue  = newValue;
+                                            }
                                         }
+                                    }
 
-                                        if (0 < i)
-                                                costs[s2.length] = lastValue;
+                                    if (0 < i)
+                                        costs[s2.length] = lastValue;
                                 }
                                 return costs[s2.length];
                             },
@@ -1057,7 +1063,7 @@
 
                         var longerLength = longer.length;
                         if (0 === longerLength) {
-                                return 1.0;
+                            return 1.0;
                         }
                         return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
                 },
